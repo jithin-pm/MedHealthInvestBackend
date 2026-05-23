@@ -52,16 +52,44 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+  "http://localhost:5176",
+  "https://medhealthbackend.medhealthinvest.com",
+  "https://medhealthinvest.com",
+  "https://www.medhealthinvest.com",
+  "https://admin.medhealthinvest.com",
+  "https://medhealth.medhealthinvest.com"
+];
+
+// Dynamic origin checker supporting any localhost port and any medhealthinvest.com subdomain
+const corsOriginChecker = (origin, callback) => {
+  if (!origin) return callback(null, true);
+  
+  const isAllowed = allowedOrigins.includes(origin) || 
+                    origin.endsWith(".medhealthinvest.com") || 
+                    origin === "https://medhealthinvest.com" ||
+                    /^http:\/\/localhost:\d+$/.test(origin);
+                    
+  if (isAllowed) {
+    callback(null, true);
+  } else {
+    callback(null, false); // Return false instead of throwing Error to prevent app crash under some configurations
+  }
+};
+
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"],
+    origin: corsOriginChecker,
     methods: ["GET", "POST"],
     credentials: true
   }
 });
 
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"],
+  origin: corsOriginChecker,
   credentials: true
 }));
 app.use(express.json());

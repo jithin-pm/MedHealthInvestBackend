@@ -1,5 +1,6 @@
 const axios = require("axios");
 const BankDetails = require("../models/bankDetailsModel");
+const User = require("../models/userModel");
 
 exports.verifyBankAccount = async (req, res) => {
   try {
@@ -42,23 +43,49 @@ exports.verifyBankAccount = async (req, res) => {
     const bankInfo = response.data;
 
     // Save to database if successful
-    if (bankInfo.status === "SUCCESS" || bankInfo.data?.status === "SUCCESS") {
-      const details = bankInfo.data || {};
-      
-      // Update or create bank details for this user
-      await BankDetails.upsert({
+    const isSuccess = 
+      bankInfo.status === "SUCCESS" || 
+      bankInfo.account_status === "VALID" || 
+      bankInfo.data?.status === "SUCCESS";
+
+    if (isSuccess) {
+      const details = bankInfo.data || bankInfo || {};
+      const dbPayload = {
         userId,
-        accountHolderName: details.name_at_bank || name,
+        accountHolderName: details.name_at_bank || details.nameAtBank || name,
         bankAccount: bank_account,
         ifsc: ifsc,
-        bankName: details.bank_name || "N/A",
+        bankName: details.bank_name || details.bankName || "N/A",
         branch: details.branch || "N/A",
         city: details.city || "N/A",
         payoutPhone: phone,
-        status: "VERIFIED",
+        status: "verified",
         isVerified: true,
-        referenceId: bankInfo.reference_id || "N/A"
-      });
+        referenceId: bankInfo.reference_id || bankInfo.refId || "N/A",
+        nameMatchScore: details.name_match_score || "100.00",
+        ifscDetails: details.ifsc_details || details.ifscDetails || null,
+        verifiedAt: new Date()
+      };
+
+      const existingRecord = await BankDetails.findOne({ where: { userId } });
+      if (existingRecord) {
+        await existingRecord.update(dbPayload);
+      } else {
+        await BankDetails.create(dbPayload);
+      }
+      // Also update the User record with bank details and set isBankVerified to 1
+      await User.update(
+        {
+          bankName: details.bank_name || details.bankName || "N/A",
+          accountNumber: bank_account,
+          ifscCode: ifsc,
+          accountHolderName: details.name_at_bank || details.nameAtBank || name,
+          isBankVerified: 1,
+        },
+        {
+          where: { id: userId },
+        }
+      );
     }
 
     return res.status(200).json({

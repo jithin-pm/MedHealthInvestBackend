@@ -1,5 +1,7 @@
 const User = require("../models/userModel");
 const Admin = require("../models/adminModel");
+const PanDetails = require("../models/panDetailsModel");
+const BankDetails = require("../models/bankDetailsModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -74,14 +76,16 @@ const authController = {
       res.status(200).json({
         message: "Login successful",
         accessToken,
-        role: user.role, // Return role explicitly
+        role: user.role,
         user: {
           id: user.id,
           fullName: user.fullName,
           email: user.email,
           mobileNumber: user.mobileNumber,
           countryCode: user.countryCode,
-          role: user.role
+          role: user.role,
+          isPanVerified: user.isPanVerified || 0,
+          isBankVerified: user.isBankVerified || 0
         },
       });
     } catch (error) {
@@ -169,6 +173,69 @@ const authController = {
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+  },
+
+  getVerificationStatus: async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await User.findOne({
+        where: { id: userId },
+        attributes: [
+          'isPanVerified', 
+          'isBankVerified',
+          'fullName',
+          'bankName',
+          'accountNumber',
+          'ifscCode',
+          'accountHolderName'
+        ]
+      });
+      const fs = require('fs');
+      const logData = {
+        timestamp: new Date().toISOString(),
+        reqUserId: userId,
+        userFound: user ? {
+          id: user.id,
+          fullName: user.fullName,
+          isPanVerified: user.isPanVerified,
+          isBankVerified: user.isBankVerified,
+          bankName: user.bankName,
+          accountNumber: user.accountNumber,
+          ifscCode: user.ifscCode,
+          accountHolderName: user.accountHolderName
+        } : null,
+      };
+
+      let panDetails = null;
+      let bankDetails = null;
+
+      if (user.isPanVerified === 1) {
+        panDetails = await PanDetails.findOne({ where: { userId } });
+        logData.panDetailsFound = panDetails ? panDetails.toJSON() : null;
+      }
+
+      if (user.isBankVerified === 1) {
+        bankDetails = await BankDetails.findOne({ where: { userId } });
+        logData.bankDetailsFound = bankDetails ? bankDetails.toJSON() : null;
+      }
+
+      fs.appendFileSync('debug.log', JSON.stringify(logData, null, 2) + '\n---\n');
+
+      res.status(200).json({
+        isPanVerified: user.isPanVerified === 1,
+        isBankVerified: user.isBankVerified === 1,
+        fullName: user.fullName,
+        bankName: user.bankName,
+        accountNumber: user.accountNumber,
+        ifscCode: user.ifscCode,
+        accountHolderName: user.accountHolderName,
+        panDetails,
+        bankDetails
+      });
+    } catch (error) {
+      console.error('Error fetching verification status:', error);
+      res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
   },
 

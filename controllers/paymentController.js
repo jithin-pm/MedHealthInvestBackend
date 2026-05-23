@@ -7,6 +7,8 @@ const User = require("../models/userModel");
 const sequelize = require("../config/db");
 const sendEmail = require("../utils/sendEmail");
 const { getProjectOngoingTemplate } = require("../utils/emailTemplates");
+const BankDetails = require("../models/bankDetailsModel");
+const PanDetails = require("../models/panDetailsModel");
 
 
 const razorpay = new Razorpay({
@@ -279,25 +281,55 @@ const paymentController = {
   getUserFinancialDetails: async (req, res) => {
     try {
       const { userId } = req.params;
-      // We use raw queries since we don't have defined models for these tables
-      const [bankResults] = await sequelize.query(`SELECT * FROM bank_details WHERE userId = ?`, {
-        replacements: [userId],
-        type: sequelize.QueryTypes.SELECT
-      });
-      const [panResults] = await sequelize.query(`SELECT * FROM pan_details WHERE userId = ?`, {
-        replacements: [userId],
-        type: sequelize.QueryTypes.SELECT
-      });
+      
+      const bankDetails = await BankDetails.findOne({ where: { userId } });
+      const panDetails = await PanDetails.findOne({ where: { userId } });
       
       return res.status(200).json({ 
-        bank: bankResults || { accountNumber: 'DUMMY123456789', ifsc: 'DUMMY000123', bankName: 'Standard Test Bank' },
-        pan: panResults || { panNumber: 'ABCDE1234F' }
+        bank: bankDetails ? {
+          accountNumber: bankDetails.bankAccount,
+          ifsc: bankDetails.ifsc,
+          bankName: bankDetails.bankName,
+          accountHolderName: bankDetails.accountHolderName,
+          branch: bankDetails.branch,
+          city: bankDetails.city,
+          payoutPhone: bankDetails.payoutPhone
+        } : { 
+          accountNumber: 'DUMMY123456789', 
+          ifsc: 'DUMMY000123', 
+          bankName: 'Standard Test Bank',
+          accountHolderName: 'Standard Test Holder',
+          branch: 'Main Branch',
+          city: 'Mumbai',
+          payoutPhone: '9876543210'
+        },
+        pan: panDetails ? {
+          panNumber: panDetails.panNumber,
+          fullName: panDetails.fullName,
+          dob: panDetails.dob
+        } : { 
+          panNumber: 'ABCDE1234F',
+          fullName: 'Standard Test Holder',
+          dob: '1995-01-01'
+        }
       });
     } catch (error) {
       console.error("Error fetching user details:", error);
       return res.status(200).json({ 
-        bank: { accountNumber: 'DUMMY123456789', ifsc: 'DUMMY000123', bankName: 'Standard Test Bank' },
-        pan: { panNumber: 'ABCDE1234F' }
+        bank: { 
+          accountNumber: 'DUMMY123456789', 
+          ifsc: 'DUMMY000123', 
+          bankName: 'Standard Test Bank',
+          accountHolderName: 'Standard Test Holder',
+          branch: 'Main Branch',
+          city: 'Mumbai',
+          payoutPhone: '9876543210'
+        },
+        pan: { 
+          panNumber: 'ABCDE1234F',
+          fullName: 'Standard Test Holder',
+          dob: '1995-01-01'
+        }
       });
     }
   },

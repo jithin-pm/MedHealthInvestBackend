@@ -1,19 +1,19 @@
 const axios = require("axios");
 const PanDetails = require("../models/panDetailsModel");
+const User = require("../models/userModel");
 
 exports.verifyPanCard = async (req, res) => {
   try {
     const {
       userId,
       panNumber,
-      fullName,
-      dob
+      fullName
     } = req.body;
 
-    if (!userId || !panNumber || !fullName || !dob) {
+    if (!userId || !panNumber || !fullName) {
         return res.status(400).json({
             success: false,
-            message: "All fields (userId, panNumber, fullName, dob) are required"
+            message: "All fields (userId, panNumber, fullName) are required"
         });
     }
 
@@ -38,17 +38,29 @@ exports.verifyPanCard = async (req, res) => {
 
     const panInfo = response.data;
 
-    // Save to database if successful
-    if (panInfo.status === "SUCCESS" || panInfo.valid) {
-      await PanDetails.upsert({
+    if (panInfo.valid === true) {
+      const dbPayload = {
         userId,
         fullName: panInfo.name || fullName,
         panNumber: panNumber,
-        dob: dob,
-        status: "VERIFIED",
+        status: "verified",
         isVerified: true,
-        referenceId: panInfo.reference_id || "N/A"
-      });
+        referenceId: panInfo.reference_id || "N/A",
+        verifiedAt: new Date()
+      };
+
+      const existingRecord = await PanDetails.findOne({ where: { userId } });
+      if (existingRecord) {
+        await existingRecord.update(dbPayload);
+      } else {
+        await PanDetails.create(dbPayload);
+      }
+
+      // Update isPanVerified to 1 in the users table
+      await User.update(
+        { isPanVerified: 1 },
+        { where: { id: userId } }
+      );
     }
 
     return res.status(200).json({

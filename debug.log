@@ -1,0 +1,870 @@
+{
+  "timestamp": "2026-05-21T10:31:29.483Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T10:31:29.519Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T10:35:47.989Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T10:35:48.030Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T11:49:49.757Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T11:49:49.805Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T12:02:36.229Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T12:02:36.255Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T12:11:17.692Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T12:11:17.714Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T12:18:40.338Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T12:18:40.369Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T12:30:41.979Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T12:30:42.008Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-21T12:44:23.869Z",
+  "reqUserId": "25",
+  "userFound": {
+    "fullName": "jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 2,
+    "userId": 25,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": null,
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1245461",
+    "verifiedAt": "2026-05-21T08:21:37.000Z",
+    "created_at": "2026-05-21T08:21:37.000Z",
+    "updated_at": "2026-05-21T08:21:37.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 1,
+    "userId": 25,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5065858",
+    "nameMatchScore": "100.00",
+    "ifscDetails": {
+      "bank": "Yes Bank",
+      "city": "MUMBAI",
+      "ifsc": "YESB0000262",
+      "micr": 400065001,
+      "nbin": null,
+      "state": "MAHARASHTRA",
+      "branch": "SANTACRUZ, MUMBAI",
+      "address": "GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054",
+      "category": null,
+      "swift_code": null,
+      "ifsc_subcode": "YESB0"
+    },
+    "verifiedAt": "2026-05-21T08:39:51.000Z",
+    "created_at": "2026-05-21T08:39:51.000Z",
+    "updated_at": "2026-05-21T08:39:51.000Z"
+  }
+}
+---

@@ -43,6 +43,32 @@ const User = sequelize.define(
       allowNull: true,
       defaultValue: null,
     },
+    bankName: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    accountNumber: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    ifscCode: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
+    accountHolderName: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    isBankVerified: {
+      type: DataTypes.TINYINT,
+      allowNull: true,
+      defaultValue: 0,
+    },
+    isPanVerified: {
+      type: DataTypes.TINYINT,
+      allowNull: true,
+      defaultValue: 0,
+    }
   },
   {
     tableName: "users",
