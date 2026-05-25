@@ -1,0 +1,660 @@
+{
+  "info": {
+    "name": "MedHealth Invest API",
+    "description": "Complete API collection for MedHealth Invest Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "projectId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"mobileNumber\": \"9876543210\",\n  \"password\": \"password123\",\n  \"countryCode\": \"+91\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('token', jsonData.token);",
+                  "}",
+                  "if (jsonData.user && jsonData.user.id) {",
+                  "    pm.collectionVariables.set('userId', jsonData.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mobileNumber\": \"9876543210\",\n  \"password\": \"password123\",\n  \"countryCode\": \"+91\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('adminToken', jsonData.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@gmail.com\",\n  \"password\": \"admin1234\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/admin-login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "admin-login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"your_refresh_token_here\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Extend Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/extend-session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "extend-session"]
+            }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/all-users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "all-users"]
+            }
+          }
+        },
+        {
+          "name": "Get Verification Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verification-status/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "verification-status", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 Categories",
+      "item": [
+        {
+          "name": "Add Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryName\": \"Healthcare\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/category/add",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "category", "add"]
+            }
+          }
+        },
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/category/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "category", "all"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Projects",
+      "item": [
+        {
+          "name": "Add Project (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "projectName", "value": "Healthcare Fund Alpha", "type": "text" },
+                { "key": "projectDescription", "value": "A premium healthcare investment opportunity", "type": "text" },
+                { "key": "targetAmount", "value": "500000", "type": "text" },
+                { "key": "roi", "value": "12", "type": "text" },
+                { "key": "duration", "value": "6", "type": "text" },
+                { "key": "projectCategory", "value": "Healthcare", "type": "text" },
+                { "key": "projectType", "value": "Standard", "type": "text" },
+                { "key": "minInvestmentAmount", "value": "1000", "type": "text" },
+                { "key": "projectImages", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/project/add",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project", "add"]
+            }
+          }
+        },
+        {
+          "name": "Edit Project (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "projectName", "value": "Updated Project Name", "type": "text" },
+                { "key": "roi", "value": "15", "type": "text" },
+                { "key": "projectImages", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/project/edit/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project", "edit", "{{projectId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get All Projects",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.projects && jsonData.projects.length > 0) {",
+                  "    pm.collectionVariables.set('projectId', jsonData.projects[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project", "all"]
+            }
+          }
+        },
+        {
+          "name": "Get Project By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/get/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project", "get", "{{projectId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Project (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/project/delete/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "project", "delete", "{{projectId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Payments",
+      "item": [
+        {
+          "name": "Create Payment Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 5000,\n  \"projectId\": {{projectId}},\n  \"userId\": {{userId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/create-order",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payment", "create-order"]
+            }
+          }
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpay_order_id\": \"order_xxxxx\",\n  \"razorpay_payment_id\": \"pay_xxxxx\",\n  \"razorpay_signature\": \"signature_xxxxx\",\n  \"projectId\": {{projectId}},\n  \"userId\": {{userId}},\n  \"amount\": 5000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payment", "verify"]
+            }
+          }
+        },
+        {
+          "name": "Get All Transactions (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payment", "all"]
+            }
+          }
+        },
+        {
+          "name": "Get Investors By Project",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/investors/{{projectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payment", "investors", "{{projectId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get User Investments",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/user-investments/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payment", "user-investments", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get User Financial Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/user-details/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payment", "user-details", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Record Payback (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "paybackProof", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/record-payback/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payment", "record-payback", "1"]
+            }
+          }
+        },
+        {
+          "name": "Admin Record Investment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": {{projectId}},\n  \"userId\": {{userId}},\n  \"amount\": 10000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payment/admin-record-investment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payment", "admin-record-investment"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏦 Bank Verification",
+      "item": [
+        {
+          "name": "Verify Bank Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bankAccount\": \"1234567890\",\n  \"ifsc\": \"YESB0000262\",\n  \"name\": \"John Doe\",\n  \"phone\": \"9876543210\",\n  \"userId\": {{userId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bank/verify-bank",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bank", "verify-bank"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🪪 PAN Verification",
+      "item": [
+        {
+          "name": "Verify PAN Card",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pan\": \"ABCDE1234F\",\n  \"name\": \"John Doe\",\n  \"userId\": {{userId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pan/verify-pan",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pan", "verify-pan"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📩 Enquiries",
+      "item": [
+        {
+          "name": "Create Enquiry",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"9876543210\",\n  \"message\": \"I would like to know more about your investment plans.\",\n  \"enquiryType\": \"General\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiry",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enquiry"]
+            }
+          }
+        },
+        {
+          "name": "Get All Enquiries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiry",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enquiry"]
+            }
+          }
+        },
+        {
+          "name": "Get Enquiries By Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiry/type/General",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enquiry", "type", "General"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💬 Chat",
+      "item": [
+        {
+          "name": "Upload Chat File",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Get Messages By User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/messages/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "messages", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Active Chats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/active-chats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "active-chats"]
+            }
+          }
+        },
+        {
+          "name": "Delete Message",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/messages/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "messages", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/unread-count/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "unread-count", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📈 Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Stats (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 Health Check",
+      "item": [
+        {
+          "name": "API Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

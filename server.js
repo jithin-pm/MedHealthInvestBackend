@@ -61,7 +61,10 @@ const allowedOrigins = [
   "https://medhealthinvest.com",
   "https://www.medhealthinvest.com",
   "https://admin.medhealthinvest.com",
-  "https://medhealth.medhealthinvest.com"
+  "https://medhealth.medhealthinvest.com",
+  "https://medicedhealthinv.online",
+  "https://www.medicedhealthinv.online",
+  "https://admin.medicedhealthinv.online"
 ];
 
 // Dynamic origin checker supporting any localhost port and any medhealthinvest.com subdomain
@@ -70,7 +73,9 @@ const corsOriginChecker = (origin, callback) => {
   
   const isAllowed = allowedOrigins.includes(origin) || 
                     origin.endsWith(".medhealthinvest.com") || 
+                    origin.endsWith(".medicedhealthinv.online") || 
                     origin === "https://medhealthinvest.com" ||
+                    origin === "https://medicedhealthinv.online" ||
                     /^http:\/\/localhost:\d+$/.test(origin);
                     
   if (isAllowed) {
