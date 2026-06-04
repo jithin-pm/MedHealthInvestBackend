@@ -31,6 +31,7 @@ router.patch(
   adminMiddleware,
   upload.fields([
     { name: "projectImages", maxCount: 4 },
+    { name: "preSettledProof", maxCount: 1 }
   ]),
   projectController.addProject
 );
@@ -42,6 +43,7 @@ router.patch(
   adminMiddleware,
   upload.fields([
     { name: "projectImages", maxCount: 4 },
+    { name: "preSettledProof", maxCount: 1 }
   ]),
   projectController.editProject
 );

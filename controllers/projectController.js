@@ -8,10 +8,12 @@ const { getProjectLaunchTemplate, getProjectCompletedTemplate } = require("../ut
 
 
 
+const Transaction = require("../models/transactionModel");
+
 const projectController = {
   addProject: async (req, res) => {
     try {
-      const { projectName, projectCategory, projectType, targetAmount, collectedAmount, minInvestmentAmount, roi, duration, exclusiveUserId } = req.body;
+      const { projectName, projectCategory, projectType, targetAmount, collectedAmount, minInvestmentAmount, roi, duration, exclusiveUserId, investmentMode } = req.body;
 
       if (!projectName || !projectCategory || !projectType || !targetAmount || !roi || !duration) {
         return res.status(400).json({ message: "All fields except files are required" });
@@ -40,19 +42,56 @@ const projectController = {
         finalImages = req.files && req.files.projectImages ? req.files.projectImages.map(f => f.path) : [];
       }
 
+      const isPreSettled = projectType === 'Exclusive' && investmentMode === 'Pre-Settled';
+      const ongoingStartDate = isPreSettled ? new Date() : null;
+      const durationValue = parseInt(duration);
+      const completionDate = isPreSettled ? new Date(ongoingStartDate.getTime() + (durationValue * 30 * 24 * 60 * 60 * 1000)) : null;
+
       const newProject = await Project.create({
         projectName,
         projectCategory,
         projectType,
         targetAmount,
-        collectedAmount: collectedAmount || 0,
+        collectedAmount: isPreSettled ? targetAmount : (collectedAmount || 0),
         minInvestmentAmount: minInvestmentAmount || 1000,
         roi,
         duration,
         projectImages: JSON.stringify(finalImages),
+        status: isPreSettled ? 'ONGOING' : 'ACTIVE',
         activeDeadline: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
+        ongoingStartDate,
+        completionDate,
         exclusiveUserId: (projectType === 'Exclusive' && exclusiveUserId && !isNaN(parseInt(exclusiveUserId))) ? parseInt(exclusiveUserId) : null
       });
+
+      if (isPreSettled) {
+        const parsedUserId = parseInt(exclusiveUserId);
+        const preSettledProofPath = req.files && req.files.preSettledProof ? req.files.preSettledProof[0].path.replace(/\\/g, '/') : null;
+
+        // 1. Create the Investment record
+        const investment = await Investment.create({
+          projectId: newProject.id,
+          userId: parsedUserId,
+          amount: parseFloat(targetAmount),
+          paymentId: `PRE_SETTLED_${Date.now()}`,
+          orderId: `PRE_SETTLED_ORDER_${Date.now()}`,
+          status: 'SUCCESS',
+          paybackStatus: 'PENDING',
+          paybackProof: preSettledProofPath
+        });
+
+        // 2. Create the Transaction record in global Ledger
+        await Transaction.create({
+          userId: parsedUserId,
+          projectId: newProject.id,
+          investmentId: investment.id,
+          amount: parseFloat(targetAmount),
+          transactionId: investment.paymentId,
+          type: 'INVESTMENT',
+          status: 'SUCCESS',
+          description: `Pre-Settled Exclusive Investment in ${projectName}`
+        });
+      }
 
       res.status(201).json({ message: "Project created successfully", project: newProject });
 

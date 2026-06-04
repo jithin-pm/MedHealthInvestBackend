@@ -68,6 +68,16 @@ const User = sequelize.define(
       type: DataTypes.TINYINT,
       allowNull: true,
       defaultValue: 0,
+    },
+    loginAttempts: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    lockUntil: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
     }
   },
   {

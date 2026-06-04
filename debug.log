@@ -1276,3 +1276,259 @@
   }
 }
 ---
+{
+  "timestamp": "2026-05-25T06:57:55.896Z",
+  "reqUserId": "3",
+  "userFound": {
+    "fullName": "Jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 0,
+    "bankName": null,
+    "accountNumber": null,
+    "ifscCode": null,
+    "accountHolderName": null
+  },
+  "panDetailsFound": {
+    "id": 1,
+    "userId": 3,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": "2026-01-01",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1244864",
+    "verifiedAt": "2026-05-20T13:06:03.000Z",
+    "created_at": "2026-05-20T11:29:11.000Z",
+    "updated_at": "2026-05-20T13:06:03.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-25T06:57:56.029Z",
+  "reqUserId": "3",
+  "userFound": {
+    "fullName": "Jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 0,
+    "bankName": null,
+    "accountNumber": null,
+    "ifscCode": null,
+    "accountHolderName": null
+  },
+  "panDetailsFound": {
+    "id": 1,
+    "userId": 3,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": "2026-01-01",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1244864",
+    "verifiedAt": "2026-05-20T13:06:03.000Z",
+    "created_at": "2026-05-20T11:29:11.000Z",
+    "updated_at": "2026-05-20T13:06:03.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-25T06:58:19.034Z",
+  "reqUserId": "3",
+  "userFound": {
+    "fullName": "Jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 0,
+    "bankName": null,
+    "accountNumber": null,
+    "ifscCode": null,
+    "accountHolderName": null
+  },
+  "panDetailsFound": {
+    "id": 1,
+    "userId": 3,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": "2026-01-01",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1244864",
+    "verifiedAt": "2026-05-20T13:06:03.000Z",
+    "created_at": "2026-05-20T11:29:11.000Z",
+    "updated_at": "2026-05-20T13:06:03.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-25T06:58:19.284Z",
+  "reqUserId": "3",
+  "userFound": {
+    "fullName": "Jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 0,
+    "bankName": null,
+    "accountNumber": null,
+    "ifscCode": null,
+    "accountHolderName": null
+  },
+  "panDetailsFound": {
+    "id": 1,
+    "userId": 3,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": "2026-01-01",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1244864",
+    "verifiedAt": "2026-05-20T13:06:03.000Z",
+    "created_at": "2026-05-20T11:29:11.000Z",
+    "updated_at": "2026-05-20T13:06:03.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-05-25T07:05:20.928Z",
+  "reqUserId": "24",
+  "userFound": {
+    "fullName": "test user",
+    "isPanVerified": 0,
+    "isBankVerified": 0,
+    "bankName": null,
+    "accountNumber": null,
+    "ifscCode": null,
+    "accountHolderName": null
+  }
+}
+---
+{
+  "timestamp": "2026-05-25T07:05:20.985Z",
+  "reqUserId": "24",
+  "userFound": {
+    "fullName": "test user",
+    "isPanVerified": 0,
+    "isBankVerified": 0,
+    "bankName": null,
+    "accountNumber": null,
+    "ifscCode": null,
+    "accountHolderName": null
+  }
+}
+---
+{
+  "timestamp": "2026-05-25T08:35:27.768Z",
+  "reqUserId": "26",
+  "userFound": {
+    "fullName": "Jithin pm",
+    "isPanVerified": 0,
+    "isBankVerified": 0,
+    "bankName": null,
+    "accountNumber": null,
+    "ifscCode": null,
+    "accountHolderName": null
+  }
+}
+---
+{
+  "timestamp": "2026-05-25T08:35:27.922Z",
+  "reqUserId": "26",
+  "userFound": {
+    "fullName": "Jithin pm",
+    "isPanVerified": 0,
+    "isBankVerified": 0,
+    "bankName": null,
+    "accountNumber": null,
+    "ifscCode": null,
+    "accountHolderName": null
+  }
+}
+---
+{
+  "timestamp": "2026-06-04T10:00:40.819Z",
+  "reqUserId": "3",
+  "userFound": {
+    "fullName": "Jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 1,
+    "userId": 3,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": "2026-01-01",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1244864",
+    "verifiedAt": "2026-05-20T13:06:03.000Z",
+    "created_at": "2026-05-20T11:29:11.000Z",
+    "updated_at": "2026-05-20T13:06:03.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 3,
+    "userId": 3,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5068886",
+    "nameMatchScore": "100.00",
+    "ifscDetails": "{\"bank\":\"Yes Bank\",\"ifsc\":\"YESB0000262\",\"micr\":400065001,\"nbin\":null,\"address\":\"GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054\",\"city\":\"MUMBAI\",\"state\":\"MAHARASHTRA\",\"branch\":\"SANTACRUZ, MUMBAI\",\"ifsc_subcode\":\"YESB0\",\"category\":null,\"swift_code\":null}",
+    "verifiedAt": "2026-05-25T10:13:57.000Z",
+    "created_at": "2026-05-25T10:13:57.000Z",
+    "updated_at": "2026-05-25T10:13:57.000Z"
+  }
+}
+---
+{
+  "timestamp": "2026-06-04T10:00:41.015Z",
+  "reqUserId": "3",
+  "userFound": {
+    "fullName": "Jithin pm",
+    "isPanVerified": 1,
+    "isBankVerified": 1,
+    "bankName": "YES BANK",
+    "accountNumber": "026291800001191",
+    "ifscCode": "YESB0000262",
+    "accountHolderName": "JOHN DOE"
+  },
+  "panDetailsFound": {
+    "id": 1,
+    "userId": 3,
+    "fullName": "JOHN DOE",
+    "panNumber": "ABCPV1234D",
+    "dob": "2026-01-01",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "1244864",
+    "verifiedAt": "2026-05-20T13:06:03.000Z",
+    "created_at": "2026-05-20T11:29:11.000Z",
+    "updated_at": "2026-05-20T13:06:03.000Z"
+  },
+  "bankDetailsFound": {
+    "id": 3,
+    "userId": 3,
+    "accountHolderName": "JOHN DOE",
+    "bankAccount": "026291800001191",
+    "ifsc": "YESB0000262",
+    "bankName": "YES BANK",
+    "branch": "SANTACRUZ, MUMBAI",
+    "city": "MUMBAI",
+    "payoutPhone": "9999999999",
+    "status": "verified",
+    "isVerified": true,
+    "referenceId": "5068886",
+    "nameMatchScore": "100.00",
+    "ifscDetails": "{\"bank\":\"Yes Bank\",\"ifsc\":\"YESB0000262\",\"micr\":400065001,\"nbin\":null,\"address\":\"GRND FLR, SAILESH BLDG, LINKING RD,, ERSTWHILE BENZER STORE AT LNKNG RD, NXT TO HDFC BANK,SANTACRUZ(W), MUMBAI, MAHARASHTRA-400054\",\"city\":\"MUMBAI\",\"state\":\"MAHARASHTRA\",\"branch\":\"SANTACRUZ, MUMBAI\",\"ifsc_subcode\":\"YESB0\",\"category\":null,\"swift_code\":null}",
+    "verifiedAt": "2026-05-25T10:13:57.000Z",
+    "created_at": "2026-05-25T10:13:57.000Z",
+    "updated_at": "2026-05-25T10:13:57.000Z"
+  }
+}
+---

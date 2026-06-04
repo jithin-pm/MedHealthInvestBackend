@@ -517,13 +517,24 @@ const paymentController = {
           {
             model: Project,
             as: 'project',
-            attributes: ['projectName', 'projectType', 'projectCategory', 'status']
+            attributes: ['projectName', 'projectType', 'projectCategory', 'status', 'duration']
+          },
+          {
+            model: Investment,
+            as: 'investment',
+            attributes: ['paybackProof']
           }
         ],
         order: [['transactionDate', 'DESC']]
       });
 
-      return res.status(200).json({ success: true, transactions });
+      const mappedTransactions = transactions.map(t => {
+        const plain = t.get({ plain: true });
+        plain.paybackProof = plain.investment?.paybackProof || null;
+        return plain;
+      });
+
+      return res.status(200).json({ success: true, transactions: mappedTransactions });
     } catch (error) {
       console.error("Error fetching all transactions:", error);
       return res.status(500).json({ message: "Failed to fetch transaction history." });

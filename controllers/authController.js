@@ -55,9 +55,32 @@ const authController = {
         return res.status(404).json({ message: "User not found" });
       }
 
+      if (user.lockUntil && user.lockUntil > new Date()) {
+        const remainingTime = Math.ceil((user.lockUntil - new Date()) / (1000 * 60 * 60));
+        return res.status(403).json({ message: `Account is temporarily locked due to too many failed attempts. Please try again after ${remainingTime} hour(s).` });
+      }
+
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(400).json({ message: "Invalid credentials" });
+        user.loginAttempts = (user.loginAttempts || 0) + 1;
+        if (user.loginAttempts >= 3) {
+          user.lockUntil = new Date(Date.now() + 24 * 60 * 60 * 1000); // lock for 24 hours
+        }
+        await user.save();
+        
+        if (user.loginAttempts >= 3) {
+          return res.status(403).json({ message: "Account locked for 24 hours due to 3 failed login attempts." });
+        }
+        
+        const attemptsLeft = 3 - user.loginAttempts;
+        return res.status(400).json({ message: `Invalid credentials. ${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} left before account lock.` });
+      }
+
+      // If correct password, reset attempts and lockUntil
+      if (user.loginAttempts > 0 || user.lockUntil) {
+        user.loginAttempts = 0;
+        user.lockUntil = null;
+        await user.save();
       }
 
       // Generate Tokens
