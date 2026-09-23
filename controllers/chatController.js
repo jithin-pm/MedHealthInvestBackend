@@ -5,6 +5,8 @@ const fs = require('fs');
 const Message = require('../models/messageModel');
 const User = require('../models/userModel');
 const { Op } = require('sequelize');
+const pkg = require("agora-token");
+const { RtcTokenBuilder, RtcRole } = pkg;
 
 // Create upload directory if it doesn't exist
 const uploadDir = path.join(__dirname, '../uploads/chat');
@@ -147,3 +149,47 @@ exports.getUnreadCount = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch unread count', error: error.message });
   }
 };
+
+exports.generateAgoraToken = async (req, res) => {
+  try {
+    const { channelName, uid } = req.query;
+    if (!channelName) {
+      return res.status(400).json({ message: "Channel name is required" });
+    }
+
+    const appId = process.env.AGORA_APP_ID;
+    const appCertificate = process.env.AGORA_APP_CERTIFICATE;
+
+    if (!appId || !appCertificate) {
+      return res.status(500).json({ message: "Agora credentials are not configured on the server" });
+    }
+
+    const numericUid = uid ? Number(uid) : 0;
+    const role = RtcRole.PUBLISHER;
+    const expirationTimeInSeconds = 3600;
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
+
+    const token = RtcTokenBuilder.buildTokenWithUid(
+      appId,
+      appCertificate,
+      channelName,
+      numericUid,
+      role,
+      privilegeExpiredTs,
+      privilegeExpiredTs
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        token,
+        appId
+      }
+    });
+  } catch (err) {
+    console.error("Agora Token Generation Error:", err);
+    res.status(500).json({ message: "Failed to generate calling token" });
+  }
+};
+

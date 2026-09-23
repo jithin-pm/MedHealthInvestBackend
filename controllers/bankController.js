@@ -12,10 +12,10 @@ exports.verifyBankAccount = async (req, res) => {
       phone,
     } = req.body;
 
-    if (!userId || !bank_account || !ifsc || !name || !phone) {
+    if (!userId || !bank_account || !ifsc || !name) {
         return res.status(400).json({
             success: false,
-            message: "All fields (userId, bank_account, ifsc, name, phone) are required"
+            message: "All fields (userId, bank_account, ifsc, name) are required"
         });
     }
 
@@ -28,7 +28,7 @@ exports.verifyBankAccount = async (req, res) => {
         bank_account,
         ifsc,
         name,
-        phone,
+        phone: phone || "9999999999",
       },
       {
         headers: {

@@ -17,7 +17,7 @@ const getProjectLaunchTemplate = (project, user = {}) => {
         <div class="detail-value">${projectCategory}</div>
       </div>
       <div class="detail-item">
-        <div class="detail-label">Projected Annual ROI</div>
+        <div class="detail-label">Projected monthly ROI</div>
         <div class="detail-value" style="color: #00c853;">${roi}%</div>
       </div>
       <div class="detail-item">
@@ -61,7 +61,7 @@ const getProjectOngoingTemplate = (project, user = {}) => {
       </div>
     </div>
     
-    <p>Performance reports and yield updates will be available through your private dashboard. Stay visible and respond fast when updates are posted.</p>
+    <p>Performance reports and yield updates will be available through your private profile. Stay visible and respond fast when updates are posted.</p>
     
     <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}/project/${id}" class="button">View Project Details</a>
   `;
@@ -90,5 +90,72 @@ const getProjectCompletedTemplate = (project, user = {}) => {
   return wrapInBaseLayout(`Project Matured Successfully`, content, userName);
 };
 
-module.exports = { getProjectLaunchTemplate, getProjectOngoingTemplate, getProjectCompletedTemplate };
+const getPreSettledInvestmentTemplate = (project, user = {}) => {
+  const { projectName, roi, duration, targetAmount } = project;
+  const userName = user.fullName || 'Investor';
 
+  const content = `
+    <p>Great news! Your payment has been successfully verified by our team, and your invested timeline has started for <strong>${projectName}</strong>.</p>
+    
+    <div class="project-card">
+      <div class="detail-item">
+        <div class="detail-label">Project</div>
+        <div class="detail-value">${projectName}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Invested Amount</div>
+        <div class="detail-value">₹${Number(targetAmount).toLocaleString('en-IN')}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Contracted Monthly ROI</div>
+        <div class="detail-value" style="color: #00c853;">${roi}%</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Duration</div>
+        <div class="detail-value">${duration} Months</div>
+      </div>
+    </div>
+    
+    <p>Performance reports and yield updates will be available through your private profile.</p>
+    
+    <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}/profile" class="button">View Profile</a>
+  `;
+
+  return wrapInBaseLayout(`Investment Confirmation - ${projectName}`, content, userName);
+};
+
+const getInvestmentSuccessTemplate = (project, user = {}, amount) => {
+  const { projectName, roi, duration } = project;
+  const userName = user.fullName || 'Investor';
+
+  const content = `
+    <p>Congratulations! Your investment in <strong>${projectName}</strong> has been successfully processed.</p>
+    
+    <div class="project-card">
+      <div class="detail-item">
+        <div class="detail-label">Project Name</div>
+        <div class="detail-value">${projectName}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Invested Amount</div>
+        <div class="detail-value">₹${Number(amount).toLocaleString('en-IN')}</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Projected Monthly ROI</div>
+        <div class="detail-value" style="color: #00c853;">${roi}%</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Duration</div>
+        <div class="detail-value">${duration} Months</div>
+      </div>
+    </div>
+    
+    <p>You can track your investment's performance and view your transaction history from your profile.</p>
+    
+    <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}/profile" class="button">View Profile</a>
+  `;
+
+  return wrapInBaseLayout(`Investment Successful - ${projectName}`, content, userName);
+};
+
+module.exports = { getProjectLaunchTemplate, getProjectOngoingTemplate, getProjectCompletedTemplate, getPreSettledInvestmentTemplate, getInvestmentSuccessTemplate };

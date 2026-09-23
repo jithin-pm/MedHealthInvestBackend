@@ -83,17 +83,109 @@ const authController = {
         await user.save();
       }
 
+      // Generate OTP manually because the template requires ##number## variable
+      const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Issue a temp token containing the OTP for stateless verification
+      const payload = { id: user.id, mobileNumber: user.mobileNumber, countryCode: user.countryCode, otp: generatedOtp };
+      const tempToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1m" });
+
+      const authKey = process.env.MSG91_AUTH_KEY ? process.env.MSG91_AUTH_KEY.trim() : null;
+      const templateId = process.env.MSG91_TEMPLATE_ID ? process.env.MSG91_TEMPLATE_ID.trim() : null;
+      const senderId = process.env.MSG91_SENDER_ID ? process.env.MSG91_SENDER_ID.trim() : null;
+      
+      // format mobile number without + sign
+      const formattedCode = user.countryCode ? user.countryCode.replace(/\D/g, '') : '91';
+      const formattedMobile = user.mobileNumber ? user.mobileNumber.replace(/\D/g, '') : '';
+      const fullMobile = `${formattedCode}${formattedMobile}`;
+      
+      if (authKey && templateId) {
+         try {
+           const axios = require('axios');
+           const options = {
+             method: 'POST',
+             url: 'https://control.msg91.com/api/v5/flow/',
+             headers: {
+               'authkey': authKey,
+               'content-type': 'application/json'
+             },
+             data: {
+               template_id: templateId,
+               short_url: "0",
+               recipients: [
+                 {
+                   mobiles: fullMobile,
+                   number: generatedOtp
+                 }
+               ]
+             }
+           };
+           
+           if (senderId) {
+               options.data.sender = senderId;
+           }
+           
+           console.log("MSG91 Calling Flow API for OTP delivery to:", fullMobile);
+           await axios(options);
+         } catch (err) {
+           console.error("MSG91 Error sending OTP:", err.response ? err.response.data : err.message);
+         }
+      } else {
+         console.warn("MSG91 Auth Key or Template ID missing. OTP not sent. Use 123456 to bypass.");
+      }
+
+      const mobileEnding = user.mobileNumber ? user.mobileNumber.slice(-4) : "****";
+
+      res.status(200).json({
+        message: "OTP sent to registered mobile number",
+        requiresOtp: true,
+        tempToken,
+        mobileEnding
+      });
+    } catch (error) {
+      console.error("Error in login:", error);
+      res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+  },
+
+  verifyLoginOtp: async (req, res) => {
+    try {
+      const { tempToken, otp } = req.body;
+      if (!tempToken || !otp) {
+        return res.status(400).json({ message: "Token and OTP are required" });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
+      } catch (err) {
+        return res.status(401).json({ message: "Session expired. Please login again." });
+      }
+
+      const user = await User.findByPk(decoded.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (decoded.otp !== otp) {
+          // Allow bypass only for development when MSG91 is not configured
+          if (!process.env.MSG91_AUTH_KEY && otp === "123456") {
+              // Proceed
+          } else {
+              return res.status(400).json({ message: "Invalid OTP" });
+          }
+      }
+
       // Generate Tokens
       const payload = { id: user.id, role: user.role };
       const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "70m" });
       const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 
-      // Set Refresh Token in HttpOnly Cookie
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
       res.status(200).json({
@@ -108,11 +200,129 @@ const authController = {
           countryCode: user.countryCode,
           role: user.role,
           isPanVerified: user.isPanVerified || 0,
+          isAadharVerified: user.isAadharVerified || 0,
           isBankVerified: user.isBankVerified || 0
         },
       });
     } catch (error) {
-      console.error("Error in login:", error);
+      console.error("Error verifying OTP:", error);
+      res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+  },
+
+  forgotPassword: async (req, res) => {
+    try {
+      const { mobileNumber, countryCode } = req.body;
+      if (!mobileNumber) {
+        return res.status(400).json({ message: "Mobile number is required" });
+      }
+
+      const user = await User.findOne({ where: { mobileNumber, countryCode: countryCode || '+91' } });
+      if (!user) {
+        return res.status(404).json({ message: "No account found with this mobile number" });
+      }
+
+      // Generate OTP
+      const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Issue a temp token containing the OTP
+      const payload = { id: user.id, mobileNumber: user.mobileNumber, countryCode: user.countryCode, otp: generatedOtp };
+      const tempToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1m" });
+
+      const authKey = process.env.MSG91_AUTH_KEY ? process.env.MSG91_AUTH_KEY.trim() : null;
+      const templateId = process.env.MSG91_TEMPLATE_ID ? process.env.MSG91_TEMPLATE_ID.trim() : null;
+      const senderId = process.env.MSG91_SENDER_ID ? process.env.MSG91_SENDER_ID.trim() : null;
+      
+      const formattedCode = user.countryCode ? user.countryCode.replace(/\D/g, '') : '91';
+      const formattedMobile = user.mobileNumber ? user.mobileNumber.replace(/\D/g, '') : '';
+      const fullMobile = `${formattedCode}${formattedMobile}`;
+
+      if (authKey && templateId) {
+         try {
+           const axios = require('axios');
+           const options = {
+             method: 'POST',
+             url: 'https://control.msg91.com/api/v5/flow/',
+             headers: {
+               'authkey': authKey,
+               'content-type': 'application/json'
+             },
+             data: {
+               template_id: templateId,
+               short_url: "0",
+               recipients: [
+                 {
+                   mobiles: fullMobile,
+                   number: generatedOtp
+                 }
+               ]
+             }
+           };
+           
+           if (senderId) {
+               options.data.sender = senderId;
+           }
+           
+           console.log("MSG91 Calling Flow API for OTP delivery to:", fullMobile);
+           await axios(options);
+         } catch (err) {
+           console.error("MSG91 Error sending OTP:", err.response ? err.response.data : err.message);
+         }
+      } else {
+         console.warn("MSG91 Auth Key or Template ID missing. OTP not sent. Use 123456 to bypass in dev.");
+      }
+
+      const mobileEnding = user.mobileNumber ? user.mobileNumber.slice(-4) : "****";
+
+      res.status(200).json({
+        message: "OTP sent to registered mobile number",
+        requiresOtp: true,
+        tempToken,
+        mobileEnding
+      });
+    } catch (error) {
+      console.error("Error in forgotPassword:", error);
+      res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+  },
+
+  resetPassword: async (req, res) => {
+    try {
+      const { tempToken, otp, newPassword } = req.body;
+      if (!tempToken || !otp || !newPassword) {
+        return res.status(400).json({ message: "Token, OTP, and new password are required" });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
+      } catch (err) {
+        return res.status(401).json({ message: "Session expired. Please request a new OTP." });
+      }
+
+      const user = await User.findByPk(decoded.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (decoded.otp !== otp) {
+          // Allow bypass only for development when MSG91 is not configured
+          if (!process.env.MSG91_AUTH_KEY && otp === "123456") {
+              // Proceed
+          } else {
+              return res.status(400).json({ message: "Invalid OTP" });
+          }
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+      user.loginAttempts = 0;
+      user.lockUntil = null;
+      await user.save();
+
+      res.status(200).json({ message: "Password reset successful" });
+    } catch (error) {
+      console.error("Error in resetPassword:", error);
       res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
   },
@@ -206,6 +416,7 @@ const authController = {
         where: { id: userId },
         attributes: [
           'isPanVerified', 
+          'isAadharVerified',
           'isBankVerified',
           'fullName',
           'bankName',
@@ -247,6 +458,7 @@ const authController = {
 
       res.status(200).json({
         isPanVerified: user.isPanVerified === 1,
+        isAadharVerified: user.isAadharVerified === 1,
         isBankVerified: user.isBankVerified === 1,
         fullName: user.fullName,
         bankName: user.bankName,

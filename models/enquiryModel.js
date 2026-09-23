@@ -35,9 +35,14 @@ const Enquiry = sequelize.define('Enquiry', {
     allowNull: false
   },
   enquiryType: {
-    type: DataTypes.ENUM('General', 'Exclusive'),
+    type: DataTypes.ENUM('General', 'Exclusive', 'Special'),
     allowNull: false,
     defaultValue: 'General'
+  },
+  status: {
+    type: DataTypes.ENUM('Unread', 'Read'),
+    allowNull: false,
+    defaultValue: 'Unread'
   }
 }, {
   timestamps: true

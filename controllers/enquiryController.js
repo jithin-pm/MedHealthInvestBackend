@@ -46,8 +46,8 @@ exports.getAllEnquiries = async (req, res) => {
 exports.getEnquiriesByType = async (req, res) => {
   try {
     const { type } = req.params;
-    if (!['General', 'Exclusive'].includes(type)) {
-      return res.status(400).json({ message: "Invalid enquiry type. Use 'General' or 'Exclusive'." });
+    if (!['General', 'Exclusive', 'Special'].includes(type)) {
+      return res.status(400).json({ message: "Invalid enquiry type. Use 'General', 'Exclusive', or 'Special'." });
     }
     const enquiries = await Enquiry.findAll({
       where: { enquiryType: type },
@@ -56,6 +56,24 @@ exports.getEnquiriesByType = async (req, res) => {
     res.status(200).json(enquiries);
   } catch (error) {
     console.error("Error fetching enquiries by type:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Update enquiry status (Mark as Read)
+exports.updateEnquiryStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const enquiry = await Enquiry.findByPk(id);
+    if (!enquiry) {
+      return res.status(404).json({ message: "Enquiry not found" });
+    }
+    enquiry.status = status;
+    await enquiry.save();
+    res.status(200).json({ message: "Enquiry status updated successfully", enquiry });
+  } catch (error) {
+    console.error("Error updating enquiry status:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

@@ -69,6 +69,11 @@ const User = sequelize.define(
       allowNull: true,
       defaultValue: 0,
     },
+    isAadharVerified: {
+      type: DataTypes.TINYINT,
+      allowNull: true,
+      defaultValue: 0,
+    },
     loginAttempts: {
       type: DataTypes.INTEGER,
       allowNull: false,

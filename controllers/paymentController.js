@@ -6,9 +6,12 @@ const Transaction = require("../models/transactionModel");
 const User = require("../models/userModel");
 const sequelize = require("../config/db");
 const sendEmail = require("../utils/sendEmail");
-const { getProjectOngoingTemplate } = require("../utils/emailTemplates");
+const { getProjectOngoingTemplate, getInvestmentSuccessTemplate } = require("../utils/emailTemplates");
 const BankDetails = require("../models/bankDetailsModel");
 const PanDetails = require("../models/panDetailsModel");
+const SpecialProject = require("../models/specialProjectModel");
+const SpecialInvestment = require("../models/specialInvestmentModel");
+const SpecialPayout = require("../models/specialPayoutModel");
 
 
 const razorpay = new Razorpay({
@@ -177,6 +180,23 @@ const paymentController = {
             status: result.status
           });
         }
+
+        // Send individual success email
+        (async () => {
+          try {
+            const user = await User.findByPk(userId);
+            const project = await Project.findByPk(projectId);
+            if (user && user.email) {
+              const html = getInvestmentSuccessTemplate(project, user, amount);
+              const subject = `Investment Successful - ${project.projectName}`;
+              sendEmail({ to: user.email, subject, html })
+                .then(() => console.log(`[DEBUG] Investment success email sent to ${user.email}`))
+                .catch(err => console.error(`[ERROR] Failed to send investment success email to ${user.email}:`, err));
+            }
+          } catch (error) {
+            console.error("Failed to send individual investment success email:", error);
+          }
+        })();
 
         // Send Project Ongoing Emails to Investors
         if (result.status === 'ONGOING' && !result.wasAlreadyOngoing) {
@@ -399,6 +419,23 @@ const paymentController = {
           });
         }
 
+        // Send individual success email
+        (async () => {
+          try {
+            const user = await User.findByPk(userId);
+            const project = await Project.findByPk(projectId);
+            if (user && user.email) {
+              const html = getInvestmentSuccessTemplate(project, user, amount);
+              const subject = `Investment Successful - ${project.projectName}`;
+              sendEmail({ to: user.email, subject, html })
+                .then(() => console.log(`[DEBUG] Investment success email sent to ${user.email}`))
+                .catch(err => console.error(`[ERROR] Failed to send investment success email to ${user.email}:`, err));
+            }
+          } catch (error) {
+            console.error("Failed to send individual investment success email:", error);
+          }
+        })();
+
         // Send Project Ongoing Emails to Investors
         if (result.status === 'ONGOING' && !result.wasAlreadyOngoing) {
           (async () => {
@@ -512,12 +549,12 @@ const paymentController = {
           {
             model: User,
             as: 'user',
-            attributes: ['fullName', 'email', 'mobileNumber']
+            attributes: ['id', 'fullName', 'email', 'mobileNumber']
           },
           {
             model: Project,
             as: 'project',
-            attributes: ['projectName', 'projectType', 'projectCategory', 'status', 'duration']
+            attributes: ['id', 'projectName', 'projectType', 'projectCategory', 'status', 'duration']
           },
           {
             model: Investment,
@@ -528,11 +565,83 @@ const paymentController = {
         order: [['transactionDate', 'DESC']]
       });
 
-      const mappedTransactions = transactions.map(t => {
-        const plain = t.get({ plain: true });
+      const mappedTransactions = [];
+
+      for (const t of transactions) {
+        let plain = t.get({ plain: true });
         plain.paybackProof = plain.investment?.paybackProof || null;
-        return plain;
+        
+        // Resolve missing project details for Special Project Payouts
+        if (plain.transactionId && plain.transactionId.startsWith('SP_PAYOUT_')) {
+           const payoutId = plain.transactionId.split('_')[2];
+           if (payoutId) {
+             const specialPayout = await SpecialPayout.findByPk(payoutId, {
+                include: [{
+                  model: SpecialInvestment, as: 'investment',
+                  include: [{ model: SpecialProject, as: 'project' }]
+                }]
+             });
+             if (specialPayout && specialPayout.investment && specialPayout.investment.project) {
+                 plain.project = {
+                    projectName: specialPayout.investment.project.projectName,
+                    projectType: 'Special'
+                 };
+                 plain.paybackProof = specialPayout.paybackProof;
+             }
+           }
+        }
+        
+        mappedTransactions.push(plain);
+      }
+
+      // 2. Fetch missing Special Project Investments
+      const specialInvestments = await SpecialInvestment.findAll({
+         where: { status: 'SUCCESS' },
+         include: [
+            {
+              model: User,
+              as: 'investor',
+              attributes: ['id', 'fullName', 'email', 'mobileNumber']
+            },
+            {
+              model: SpecialProject,
+              as: 'project',
+              attributes: ['id', 'projectName', 'projectCategory', 'status']
+            }
+         ]
       });
+
+      for (const spInv of specialInvestments) {
+         mappedTransactions.push({
+             id: `sp_inv_${spInv.id}`,
+             userId: spInv.userId,
+             projectId: spInv.specialProjectId,
+             investmentId: spInv.id,
+             amount: spInv.amountInvested,
+             transactionId: spInv.paymentId,
+             type: 'INVESTMENT',
+             status: 'SUCCESS',
+             description: `Special Project Investment: ${parseFloat(spInv.amountInvested).toFixed(2)}`,
+             transactionDate: spInv.created_at || spInv.createdAt,
+             user: spInv.investor ? { 
+                 id: spInv.investor.id, 
+                 fullName: spInv.investor.fullName, 
+                 email: spInv.investor.email,
+                 mobileNumber: spInv.investor.mobileNumber
+             } : null,
+             project: spInv.project ? { 
+                 id: spInv.project.id,
+                 projectName: spInv.project.projectName, 
+                 projectCategory: spInv.project.projectCategory,
+                 status: spInv.project.status,
+                 projectType: 'Special' 
+             } : null,
+             paybackProof: null
+         });
+      }
+
+      // 3. Sort combined results by date descending
+      mappedTransactions.sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate));
 
       return res.status(200).json({ success: true, transactions: mappedTransactions });
     } catch (error) {

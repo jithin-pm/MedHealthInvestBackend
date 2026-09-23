@@ -4,7 +4,7 @@ const Investment = require("../models/investmentModel");
 const sequelize = require("../config/db");
 const { Op } = require("sequelize");
 const sendEmail = require("../utils/sendEmail");
-const { getProjectLaunchTemplate, getProjectCompletedTemplate } = require("../utils/emailTemplates");
+const { getProjectLaunchTemplate, getProjectCompletedTemplate, getPreSettledInvestmentTemplate } = require("../utils/emailTemplates");
 
 
 
@@ -122,10 +122,20 @@ const projectController = {
             }
 
             for (const user of uniqueRecipients) {
-              const emailHtml = getProjectLaunchTemplate(newProject, user);
+              let emailHtml;
+              let subject;
+
+              if (isPreSettled) {
+                emailHtml = getPreSettledInvestmentTemplate(newProject, user);
+                subject = `Investment Verified & Started: ${newProject.projectName}`;
+              } else {
+                emailHtml = getProjectLaunchTemplate(newProject, user);
+                subject = `New Project Launched: ${newProject.projectName} - High ROI Opportunity!`;
+              }
+
               sendEmail({
                 to: user.email,
-                subject: `New Project Launched: ${newProject.projectName} - High ROI Opportunity!`,
+                subject: subject,
                 html: emailHtml
               }).catch(err => console.error(`Failed to send email to ${user.email}:`, err));
             }

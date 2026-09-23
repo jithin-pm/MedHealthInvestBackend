@@ -17,4 +17,7 @@ router.delete('/messages/:messageId', chatController.deleteMessage);
 // Get unread message count for a specific user
 router.get('/unread-count/:userId', chatController.getUnreadCount);
 
+// Generate Agora token for calling
+router.get('/agora-token', chatController.generateAgoraToken);
+
 module.exports = router;

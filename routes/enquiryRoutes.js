@@ -11,4 +11,7 @@ router.get('/', enquiryController.getAllEnquiries);
 // GET /api/enquiry/type/:type - Get enquiries by type (General or Exclusive)
 router.get('/type/:type', enquiryController.getEnquiriesByType);
 
+// PUT /api/enquiry/:id/status - Update enquiry status
+router.put('/:id/status', enquiryController.updateEnquiryStatus);
+
 module.exports = router;

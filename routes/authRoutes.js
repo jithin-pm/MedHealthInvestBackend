@@ -4,6 +4,9 @@ const authController = require("../controllers/authController");
 
 router.post("/register", authController.registerUser);
 router.post("/login", authController.loginUser);
+router.post("/verify-login-otp", authController.verifyLoginOtp);
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/reset-password", authController.resetPassword);
 router.post("/admin-login", authController.adminLogin);
 router.post("/refresh", authController.refreshToken);
 router.get("/all-users", authController.getAllUsers);

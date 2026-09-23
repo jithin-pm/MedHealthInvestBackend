@@ -10,9 +10,12 @@ const projectRoutes = require("./routes/projectRoutes");
 const enquiryRoutes = require("./routes/enquiryRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const specialProjectRoutes = require("./routes/specialProjectRoutes");
+const specialPaymentRoutes = require("./routes/specialPaymentRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const bankRoutes = require("./routes/bankRoutes");
 const panRoutes = require("./routes/panRoutes");
+const aadharRoutes = require("./routes/aadharRoutes");
 const BankDetails = require("./models/bankDetailsModel");
 const PanDetails = require("./models/panDetailsModel");
 const path = require("path");
@@ -25,7 +28,10 @@ const Enquiry = require("./models/enquiryModel");
 const Message = require("./models/messageModel");
 const Investment = require("./models/investmentModel");
 const Transaction = require("./models/transactionModel");
-
+const SpecialProject = require("./models/specialProjectModel");
+const SpecialInvestment = require("./models/specialInvestmentModel");
+const SpecialPayout = require("./models/specialPayoutModel");
+const SpecialInvestmentLedger = require("./models/specialInvestmentLedgerModel");
 // Associations
 Project.belongsTo(User, { foreignKey: 'exclusiveUserId', as: 'assignedUser' });
 User.hasMany(Project, { foreignKey: 'exclusiveUserId' });
@@ -47,8 +53,27 @@ BankDetails.belongsTo(User, { foreignKey: 'userId' });
 
 User.hasOne(PanDetails, { foreignKey: 'userId', as: 'panDetails' });
 PanDetails.belongsTo(User, { foreignKey: 'userId' });
+
+// Special Projects Associations
+SpecialProject.belongsTo(User, { foreignKey: 'assignedUserId', as: 'assignedUser' });
+User.hasMany(SpecialProject, { foreignKey: 'assignedUserId', as: 'specialProjects' });
+
+SpecialInvestment.belongsTo(User, { foreignKey: 'userId', as: 'investor' });
+SpecialInvestment.belongsTo(SpecialProject, { foreignKey: 'specialProjectId', as: 'project' });
+SpecialProject.hasMany(SpecialInvestment, { foreignKey: 'specialProjectId', as: 'investments' });
+User.hasMany(SpecialInvestment, { foreignKey: 'userId', as: 'specialInvestments' });
+
+SpecialPayout.belongsTo(SpecialInvestment, { foreignKey: 'specialInvestmentId', as: 'investment' });
+SpecialInvestment.hasMany(SpecialPayout, { foreignKey: 'specialInvestmentId', as: 'payouts' });
+
+SpecialInvestmentLedger.belongsTo(SpecialInvestment, { foreignKey: 'specialInvestmentId', as: 'investment' });
+SpecialInvestment.hasMany(SpecialInvestmentLedger, { foreignKey: 'specialInvestmentId', as: 'ledgerEntries' });
+
 const http = require("http");
 const { Server } = require("socket.io");
+const { setupCronJobs } = require('./utils/cronJobs');
+
+setupCronJobs();
 
 const app = express();
 const server = http.createServer(app);
@@ -62,22 +87,20 @@ const allowedOrigins = [
   "https://www.medhealthinvest.com",
   "https://admin.medhealthinvest.com",
   "https://medhealth.medhealthinvest.com",
-  "https://medicedhealthinv.online",
-  "https://www.medicedhealthinv.online",
-  "https://admin.medicedhealthinv.online"
+  "https://medicedhealthinv.online/"
 ];
 
 // Dynamic origin checker supporting any localhost port and any medhealthinvest.com subdomain
 const corsOriginChecker = (origin, callback) => {
   if (!origin) return callback(null, true);
-  
-  const isAllowed = allowedOrigins.includes(origin) || 
-                    origin.endsWith(".medhealthinvest.com") || 
-                    origin.endsWith(".medicedhealthinv.online") || 
-                    origin === "https://medhealthinvest.com" ||
-                    origin === "https://medicedhealthinv.online" ||
-                    /^http:\/\/localhost:\d+$/.test(origin);
-                    
+
+  const isAllowed = allowedOrigins.includes(origin) ||
+    origin.endsWith(".medhealthinvest.com") ||
+    origin.endsWith(".medicedhealthinv.online") ||
+    origin === "https://medhealthinvest.com" ||
+    origin === "https://medicedhealthinv.online" ||
+    /^http:\/\/localhost:\d+$/.test(origin);
+
   if (isAllowed) {
     callback(null, true);
   } else {
@@ -104,6 +127,27 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Sync database and seed admin
 const initializeDb = async () => {
   try {
+    // Ensure connection is established and wait for authentication before running schema modifications
+    try {
+      await db.authenticate();
+      console.log("Database connection authenticated for initialization.");
+    } catch (authErr) {
+      console.error("Database authentication failed during initialization:", authErr.message || authErr);
+      return; // Do not proceed with sync if database connection cannot be established
+    }
+
+    // Clean up any orphan foreign key records (`user_id` not in `users`) before altering tables
+    // This prevents `Cannot add or update a child row: a foreign key constraint fails` errors during db.sync({ alter: true })
+    try {
+      await db.query("UPDATE bank_details SET user_id = NULL WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users)");
+      await db.query("UPDATE pan_details SET user_id = NULL WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users)");
+      await db.query("UPDATE projects SET exclusiveUserId = NULL WHERE exclusiveUserId IS NOT NULL AND exclusiveUserId NOT IN (SELECT id FROM users)");
+      await db.query("UPDATE investments SET user_id = NULL WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users)");
+      await db.query("UPDATE transactions SET user_id = NULL WHERE user_id IS NOT NULL AND user_id NOT IN (SELECT id FROM users)");
+    } catch (cleanErr) {
+      // Safe to ignore if tables or columns do not exist yet on initial run
+    }
+
     // Sync all models (creates missing tables or columns)
     try {
       await db.sync({ alter: true });
@@ -120,8 +164,8 @@ const initializeDb = async () => {
           status: 'ACTIVE',
           [Op.or]: [
             // Case 1: Deadline is already set and passed
-            { 
-              activeDeadline: { [Op.lt]: new Date() } 
+            {
+              activeDeadline: { [Op.lt]: new Date() }
             },
             // Case 2: Deadline is not set but creation date + 90 days has passed
             {
@@ -167,6 +211,17 @@ const initializeDb = async () => {
       }
     } catch (dbErr) {
       console.warn("minInvestmentAmount column check failed:", dbErr.message);
+    }
+
+    // Manually add accumulatedInterest to special_investments if it doesn't exist
+    try {
+      const [accIntResults] = await db.query("SHOW COLUMNS FROM special_investments LIKE 'accumulatedInterest'");
+      if (accIntResults.length === 0) {
+        await db.query("ALTER TABLE special_investments ADD COLUMN accumulatedInterest DECIMAL(15, 2) NOT NULL DEFAULT 0.00");
+        console.log("Column 'accumulatedInterest' added to special_investments table manually.");
+      }
+    } catch (dbErr) {
+      console.warn("accumulatedInterest column check failed:", dbErr.message);
     }
 
     // Manually add enquiryType to enquiries if it doesn't exist
@@ -231,15 +286,15 @@ const initializeDb = async () => {
       for (const p of activeProjects) {
         const sourceDate = p.created_at || p.createdAt;
         if (!sourceDate) continue;
-        
+
         const deadline = new Date(sourceDate);
         if (isNaN(deadline.getTime())) {
           console.warn(`Skipping deadline sync for project ${p.id} due to invalid creation date: ${sourceDate}`);
           continue;
         }
-        
+
         deadline.setDate(deadline.getDate() + 90);
-        
+
         if (!p.activeDeadline || p.activeDeadline.getTime() !== deadline.getTime()) {
           await p.update({ activeDeadline: deadline });
           updatedCount++;
@@ -251,7 +306,7 @@ const initializeDb = async () => {
     } catch (dbErr) {
       console.warn("activeDeadline synchronization failed:", dbErr.message);
     }
-    
+
     // Seed default admin if none exists
     const adminCount = await Admin.count();
     if (adminCount === 0) {
@@ -283,12 +338,16 @@ app.use("/api/project", projectRoutes);
 app.use("/api/enquiry", enquiryRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/special-projects", specialProjectRoutes);
+app.use("/api/special-payment", specialPaymentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/bank", bankRoutes);
 app.use("/api/pan", panRoutes);
+app.use("/api/aadhar", aadharRoutes);
 
 // Online presence tracking: userId -> socketId
 const onlineUsers = new Map();
+const processedCallEnds = new Set();
 
 // Socket.IO Connection Logic
 io.on("connection", (socket) => {
@@ -338,7 +397,7 @@ io.on("connection", (socket) => {
 
       if (data.senderType === 'user') {
         io.to("admin_room").emit("receive_message", msgToEmit);
-        
+
         const messageCount = await Message.count({ where: { userId: data.userId, senderType: 'user' } });
         if (messageCount === 1) {
           const welcomeText = "Thank you for reaching out to Med Health Invest! Our support team has received your message and will get back to you as soon as possible. We appreciate your patience!";
@@ -376,6 +435,119 @@ io.on("connection", (socket) => {
       io.to(String(userId)).emit("messages_read", { userId, readerType });
     } catch (error) {
       console.error("Error marking messages as read:", error);
+    }
+  });
+
+  // Call Signaling Events
+  socket.on("initiate_call", (data) => {
+    const { receiverId, receiverRole, channelName, callerName, isVideo } = data;
+    const callerRole = receiverRole === 'user' ? 'admin' : 'user';
+    const payload = {
+      callerId: data.callerId || socket.userId || (callerRole === 'admin' ? 1 : receiverId),
+      callerRole: callerRole,
+      callerName: callerName || (callerRole === 'admin' ? 'Support Agent' : 'User'),
+      channelName,
+      isVideo: isVideo || false
+    };
+
+    console.log(`Call initiated by ${callerRole} to ${receiverId} (${receiverRole})`);
+
+    if (receiverRole === 'admin') {
+      io.to("admin_room").emit("incoming_call", payload);
+      socket.emit("call_status", { channelName, status: 'ringing' });
+    } else {
+      io.to(String(receiverId)).emit("incoming_call", payload);
+      const isOnline = onlineUsers.has(String(receiverId));
+      socket.emit("call_status", { channelName, status: isOnline ? 'ringing' : 'calling' });
+    }
+  });
+
+  socket.on("accept_call", (data) => {
+    const { callerId, callerRole, channelName } = data;
+    const payload = { channelName };
+    if (callerRole === 'admin') {
+      io.to("admin_room").emit("call_accepted", payload);
+    } else {
+      io.to(String(callerId)).emit("call_accepted", payload);
+      io.to("admin_room").emit("call_accepted", payload);
+    }
+  });
+
+  socket.on("reject_call", async (data) => {
+    const targetId = data.targetId || data.callerId;
+    const targetRole = data.targetRole || data.callerRole;
+    const { channelName, reason } = data;
+    const payload = { channelName, reason };
+
+    if (targetRole === 'admin') {
+      io.to("admin_room").emit("call_rejected", payload);
+    } else if (targetId) {
+      io.to(String(targetId)).emit("call_rejected", payload);
+    }
+
+    if (reason === 'timeout' || reason === 'declined') {
+      try {
+        let userId, senderType;
+        if (reason === 'declined') {
+          userId = targetRole === 'admin' ? (socket.userId || targetId || 1) : targetId;
+          senderType = targetRole === 'admin' ? 'admin' : 'user';
+        } else {
+          userId = targetRole === 'admin' ? (socket.userId || targetId || 1) : targetId;
+          senderType = targetRole === 'admin' ? 'user' : 'admin';
+        }
+        if (userId) {
+          const newMessage = await Message.create({
+            senderId: senderType === 'user' ? userId : 1,
+            senderType: senderType,
+            receiverId: senderType === 'user' ? 1 : userId,
+            content: reason === 'declined' ? "DECLINED_CALL" : "MISSED_CALL",
+            type: 'TEXT',
+            userId: userId
+          });
+          const msgToEmit = newMessage.get ? newMessage.get({ plain: true }) : newMessage;
+          io.to(String(userId)).emit("receive_message", msgToEmit);
+          io.to("admin_room").emit("receive_message", msgToEmit);
+        }
+      } catch (error) {
+        console.error("Error saving missed call message:", error);
+      }
+    }
+  });
+
+  socket.on("end_call", async (data) => {
+    const { otherId, otherRole, channelName, duration } = data;
+    const payload = { channelName };
+
+    if (otherRole === 'admin') {
+      io.to("admin_room").emit("call_ended", payload);
+    } else if (otherId) {
+      io.to(String(otherId)).emit("call_ended", payload);
+    }
+
+    if (channelName && !processedCallEnds.has(channelName)) {
+      try {
+        processedCallEnds.add(channelName);
+        setTimeout(() => processedCallEnds.delete(channelName), 60000);
+
+        const userId = otherRole === 'admin' ? (socket.userId || otherId || 1) : otherId;
+        const senderType = otherRole === 'admin' ? 'user' : 'admin';
+        if (userId) {
+          const content = duration > 0 ? `CALL_ENDED_${duration}` : "MISSED_CALL";
+          const newMessage = await Message.create({
+            senderId: senderType === 'user' ? userId : 1,
+            senderType: senderType,
+            receiverId: senderType === 'user' ? 1 : userId,
+            content: content,
+            type: 'TEXT',
+            userId: userId
+          });
+          const msgToEmit = newMessage.get ? newMessage.get({ plain: true }) : newMessage;
+          io.to(String(userId)).emit("receive_message", msgToEmit);
+          io.to("admin_room").emit("receive_message", msgToEmit);
+        }
+      } catch (err) {
+        console.error("Error saving call termination message:", err);
+      }
     }
   });
 
