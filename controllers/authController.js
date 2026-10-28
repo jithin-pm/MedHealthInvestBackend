@@ -726,7 +726,7 @@ const authController = {
   
   adminRefreshToken: async (req, res) => {
     try {
-      const refreshToken = req.cookies && (req.cookies.adminRefreshToken || req.cookies.refreshToken);
+      const refreshToken = (req.cookies && (req.cookies.adminRefreshToken || req.cookies.refreshToken)) || req.body?.refreshToken;
       if (!refreshToken) {
         return res.status(401).json({ message: "Admin refresh token not found" });
       }
@@ -768,18 +768,23 @@ const authController = {
       const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "70m" });
       const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 
-      // Set Refresh Token in HttpOnly Cookie
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+              // Set Refresh Token in HttpOnly Cookie with cross-site compatibility
+        const isProduction = process.env.NODE_ENV === "production" || !req.headers.host?.includes('localhost');
+        const cookieOpts = {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: isProduction ? "none" : "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        };
 
-      res.status(200).json({
-        message: "Admin login successful",
-        accessToken,
-        role: admin.role,
+        res.cookie("refreshToken", refreshToken, cookieOpts);
+        res.cookie("adminRefreshToken", refreshToken, cookieOpts);
+
+        res.status(200).json({
+          message: "Admin login successful",
+          accessToken,
+          refreshToken,
+          role: admin.role,
         user: {
           id: admin.id,
           fullName: admin.fullName,

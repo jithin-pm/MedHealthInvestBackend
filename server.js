@@ -91,24 +91,30 @@ const allowedOrigins = [
   "https://www.medhealthinvest.com",
   "https://admin.medhealthinvest.com",
   "https://medhealth.medhealthinvest.com",
-  "https://medicedhealthinv.online/"
+  "https://medicedhealthinv.online",
+  "https://medicedhealthinv.online/",
+  "https://www.medicedhealthinv.online",
+  "https://www.medicedhealthinv.online/"
 ];
 
 // Dynamic origin checker supporting any localhost port and any medhealthinvest.com subdomain
 const corsOriginChecker = (origin, callback) => {
   if (!origin) return callback(null, true);
 
+  const cleanOrigin = origin.replace(/\/$/, "");
   const isAllowed = allowedOrigins.includes(origin) ||
-    origin.endsWith(".medhealthinvest.com") ||
-    origin.endsWith(".medicedhealthinv.online") ||
-    origin === "https://medhealthinvest.com" ||
-    origin === "https://medicedhealthinv.online" ||
-    /^http:\/\/localhost:\d+$/.test(origin);
+    allowedOrigins.includes(cleanOrigin) ||
+    cleanOrigin.endsWith(".medhealthinvest.com") ||
+    cleanOrigin.endsWith(".medicedhealthinv.online") ||
+    cleanOrigin === "https://medhealthinvest.com" ||
+    cleanOrigin === "https://medicedhealthinv.online" ||
+    cleanOrigin === "https://www.medicedhealthinv.online" ||
+    /^http:\/\/localhost:\d+$/.test(cleanOrigin);
 
   if (isAllowed) {
     callback(null, true);
   } else {
-    callback(null, false); // Return false instead of throwing Error to prevent app crash under some configurations
+    callback(null, false);
   }
 };
 
