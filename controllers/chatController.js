@@ -75,7 +75,7 @@ exports.getActiveChats = async (req, res) => {
           [Op.in]: userIds
         }
       },
-      attributes: ['id', 'fullName', 'email']
+      attributes: ['id', 'customUserId', 'fullName', 'email']
     });
 
     // Fetch last message and unread count for each user

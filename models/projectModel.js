@@ -67,6 +67,14 @@ const Project = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    reminder30DaysSent: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    reminder1DaySent: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     exclusiveUserId: {
       type: DataTypes.INTEGER,
       field: 'exclusiveUserId',

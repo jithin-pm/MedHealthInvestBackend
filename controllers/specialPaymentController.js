@@ -174,7 +174,7 @@ const specialPaymentController = {
               transactionId: `SP_PAYOUT_${payout.id}_${Date.now()}`,
               type: 'PAYOUT',
               status: 'SUCCESS',
-              description: `Special Project Payout: ${actualPayout.toFixed(2)}`
+              description: `Special Project ${paybackType === 'INTEREST' ? 'Interest' : 'Capital'} Payout: ${actualPayout.toFixed(2)}`
           }, { transaction: t });
 
           return { payout, investment };

@@ -255,7 +255,7 @@ const paymentController = {
           {
             model: User,
             as: 'investor',
-            attributes: ['id', 'fullName', 'email', 'mobileNumber']
+            attributes: ['id', 'customUserId', 'fullName', 'email', 'mobileNumber']
           }
         ],
         order: [['created_at', 'DESC']]
@@ -515,12 +515,23 @@ const paymentController = {
         settlementAmount += yieldAmount;
       }
 
+      const now = new Date();
+      const dateStr = String(now.getDate()).padStart(2, '0') + String(now.getMonth() + 1).padStart(2, '0') + now.getFullYear();
+      let customTxId;
+      if (type === 'REFUND') {
+        customTxId = `REF-${dateStr}-${String(investment.id).padStart(2, '0')}`;
+      } else if (investment.project?.projectType === 'Exclusive') {
+        customTxId = `EXP-PAY-${dateStr}-${String(investment.id).padStart(2, '0')}`;
+      } else {
+        customTxId = `STD-${dateStr}-${String(investment.id).padStart(2, '0')}`;
+      }
+
       await Transaction.create({
         userId: investment.userId,
         projectId: investment.projectId,
         investmentId: investment.id,
         amount: settlementAmount,
-        transactionId: `SETTLE_${investment.id}_${Date.now()}`,
+        transactionId: customTxId,
         type: type,
         status: 'SUCCESS',
         description: `${type === 'REFUND' ? 'Capital Refund' : 'Investment Payout'} for ${investment.project?.projectName || 'Project'}`
@@ -549,7 +560,7 @@ const paymentController = {
           {
             model: User,
             as: 'user',
-            attributes: ['id', 'fullName', 'email', 'mobileNumber']
+            attributes: ['id', 'customUserId', 'fullName', 'email', 'mobileNumber']
           },
           {
             model: Project,
@@ -581,16 +592,43 @@ const paymentController = {
                   include: [{ model: SpecialProject, as: 'project' }]
                 }]
              });
-             if (specialPayout && specialPayout.investment && specialPayout.investment.project) {
-                 plain.project = {
-                    projectName: specialPayout.investment.project.projectName,
-                    projectType: 'Special'
-                 };
+             if (specialPayout) {
+                 if (specialPayout.investment && specialPayout.investment.project) {
+                     plain.project = {
+                        projectName: specialPayout.investment.project.projectName,
+                        projectType: 'Special'
+                     };
+                 }
                  plain.paybackProof = specialPayout.paybackProof;
+
+                 const roiPaid = parseFloat(specialPayout.roiPaid || 0);
+                 const capPaid = parseFloat(specialPayout.capitalPaid || 0);
+                 if (roiPaid > 0 && capPaid > 0) {
+                     plain.payoutCategory = 'INTEREST & CAPITAL RETURNED';
+                 } else if (roiPaid > 0) {
+                     plain.payoutCategory = 'INTEREST RETURNED';
+                 } else if (capPaid > 0) {
+                     plain.payoutCategory = 'CAPITAL RETURNED';
+                 }
              }
            }
         }
         
+        if (plain.transactionId && plain.transactionId.startsWith('SP_PAYOUT_')) {
+          if (!plain.project) {
+              plain.project = {
+                  projectName: 'Special Project',
+                  projectType: 'Special'
+              };
+          }
+          if (!plain.payoutCategory) {
+              if (plain.description && plain.description.toLowerCase().includes('interest')) {
+                  plain.payoutCategory = 'INTEREST RETURNED';
+              } else if (plain.description && plain.description.toLowerCase().includes('capital')) {
+                  plain.payoutCategory = 'CAPITAL RETURNED';
+              }
+          }
+        }
         mappedTransactions.push(plain);
       }
 
@@ -601,7 +639,7 @@ const paymentController = {
             {
               model: User,
               as: 'investor',
-              attributes: ['id', 'fullName', 'email', 'mobileNumber']
+              attributes: ['id', 'customUserId', 'fullName', 'email', 'mobileNumber']
             },
             {
               model: SpecialProject,
@@ -625,6 +663,7 @@ const paymentController = {
              transactionDate: spInv.created_at || spInv.createdAt,
              user: spInv.investor ? { 
                  id: spInv.investor.id, 
+                 customUserId: spInv.investor.customUserId, 
                  fullName: spInv.investor.fullName, 
                  email: spInv.investor.email,
                  mobileNumber: spInv.investor.mobileNumber
@@ -640,7 +679,58 @@ const paymentController = {
          });
       }
 
-      // 3. Sort combined results by date descending
+      // 3. Format displayTransactionId matching user side (SPL-DDMMYYYY-XX / EXP-DDMMYYYY-XX)
+      const formatDateDDMMYYYY = (dateVal) => {
+        const d = dateVal ? new Date(dateVal) : new Date();
+        if (isNaN(d.getTime())) {
+          const now = new Date();
+          return String(now.getDate()).padStart(2, '0') + String(now.getMonth() + 1).padStart(2, '0') + now.getFullYear();
+        }
+        return String(d.getDate()).padStart(2, '0') + String(d.getMonth() + 1).padStart(2, '0') + d.getFullYear();
+      };
+
+      for (const tx of mappedTransactions) {
+        const txDate = tx.transactionDate || tx.created_at || tx.createdAt || new Date();
+        const dateStr = formatDateDDMMYYYY(txDate);
+        const isSpecial = tx.project?.projectType === 'Special' || tx.project?.projectCategory === 'Special' || (typeof tx.transactionId === 'string' && tx.transactionId.startsWith('SP_')) || (typeof tx.id === 'string' && tx.id.startsWith('sp_inv_'));
+        const isExclusive = tx.project?.projectType === 'Exclusive' || tx.project?.projectCategory === 'Exclusive';
+
+        const isRefund = tx.type === 'REFUND' || tx.project?.status === 'EXPIRED' || (typeof tx.description === 'string' && tx.description.toLowerCase().includes('refund')) || (typeof tx.transactionId === 'string' && tx.transactionId.startsWith('REF-'));
+
+        if (isRefund) {
+          const invId = tx.investmentId || (typeof tx.id === 'string' && tx.id.startsWith('sp_inv_') ? tx.id.replace('sp_inv_', '') : tx.id);
+          tx.displayTransactionId = `REF-${dateStr}-${String(invId).padStart(2, '0')}`;
+        } else if (isSpecial) {
+          if (tx.type === 'PAYOUT' || (typeof tx.transactionId === 'string' && tx.transactionId.startsWith('SP_PAYOUT_'))) {
+            const parts = tx.transactionId?.split('_');
+            const payoutId = (parts && parts.length >= 3 && !isNaN(parts[2])) ? parts[2] : (tx.investmentId || tx.id);
+            tx.displayTransactionId = `SPL-PAY-${dateStr}-${String(payoutId).padStart(2, '0')}`;
+          } else {
+            const invId = tx.investmentId || (typeof tx.id === 'string' && tx.id.startsWith('sp_inv_') ? tx.id.replace('sp_inv_', '') : tx.id);
+            tx.displayTransactionId = `SPL-${dateStr}-${String(invId).padStart(2, '0')}`;
+          }
+        } else if (isExclusive) {
+          const invId = tx.investmentId || tx.id;
+          if (tx.type === 'PAYOUT') {
+            tx.displayTransactionId = `EXP-PAY-${dateStr}-${String(invId).padStart(2, '0')}`;
+          } else {
+            tx.displayTransactionId = `EXP-${dateStr}-${String(invId).padStart(2, '0')}`;
+          }
+        } else {
+          // Standard
+          if (tx.type === 'PAYOUT') {
+            const invId = tx.investmentId || tx.id;
+            tx.displayTransactionId = `STD-${dateStr}-${String(invId).padStart(2, '0')}`;
+          } else if (tx.transactionId && tx.transactionId.startsWith('pay_')) {
+            tx.displayTransactionId = tx.transactionId;
+          } else {
+            const invId = tx.investmentId || tx.id;
+            tx.displayTransactionId = `INV-${String(invId).padStart(6, '0')}`;
+          }
+        }
+      }
+
+      // 4. Sort combined results by date descending
       mappedTransactions.sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate));
 
       return res.status(200).json({ success: true, transactions: mappedTransactions });

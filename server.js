@@ -18,6 +18,7 @@ const panRoutes = require("./routes/panRoutes");
 const aadharRoutes = require("./routes/aadharRoutes");
 const BankDetails = require("./models/bankDetailsModel");
 const PanDetails = require("./models/panDetailsModel");
+const ActivityLog = require("./models/activityLogModel");
 const path = require("path");
 require("./config/email"); // Initialize Nodemailer
 const User = require("./models/userModel");
@@ -53,6 +54,9 @@ BankDetails.belongsTo(User, { foreignKey: 'userId' });
 
 User.hasOne(PanDetails, { foreignKey: 'userId', as: 'panDetails' });
 PanDetails.belongsTo(User, { foreignKey: 'userId' });
+
+User.hasMany(ActivityLog, { foreignKey: 'userId', as: 'activityLogs' });
+ActivityLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Special Projects Associations
 SpecialProject.belongsTo(User, { foreignKey: 'assignedUserId', as: 'assignedUser' });

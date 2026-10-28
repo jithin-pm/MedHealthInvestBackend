@@ -9,6 +9,11 @@ const User = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
+    customUserId: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      unique: true,
+    },
     fullName: {
       type: DataTypes.STRING(255),
       allowNull: false,
@@ -33,6 +38,11 @@ const User = sequelize.define(
     },
     countryCode: {
       type: DataTypes.STRING(10),
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
     role: {
       type: DataTypes.STRING(50),
