@@ -280,6 +280,8 @@ const authController = {
 
         const remainingHours = Math.ceil((new Date(user.lockUntil) - new Date()) / (1000 * 60 * 60));
         return res.status(403).json({ 
+          isLocked: true,
+          remainingHours,
           message: `Account is temporarily blocked due to 3 failed password attempts in a day. Please try again after ${remainingHours} hour(s) or contact support.` 
         });
       } else if (user.lockUntil && new Date(user.lockUntil) <= new Date()) {
@@ -339,6 +341,8 @@ const authController = {
           })();
 
           return res.status(403).json({ 
+            isLocked: true,
+            remainingHours: 24,
             message: "Account blocked for 24 hours due to 3 failed login attempts in a day. A security alert has been sent to your email." 
           });
         }
@@ -386,6 +390,8 @@ const authController = {
         }
 
         return res.status(400).json({ 
+          isLocked: false,
+          attemptsLeft,
           message: `Invalid credentials. You have ${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} left today, after which your account will be blocked for 24 hours.` 
         });
       }
