@@ -11,7 +11,7 @@ const { generateNextCustomUserId } = require("../utils/generateCustomUserId");
 const authController = {
   registerUser: async (req, res) => {
     try {
-      const { fullName, email, password, gender, mobileNumber, countryCode } = req.body;
+      const { fullName, email, password, gender, mobileNumber, countryCode, location, latitude, longitude } = req.body;
 
       // Basic validation
       if (!fullName || !email || !password || !gender || !mobileNumber || !countryCode) {
@@ -60,6 +60,9 @@ const authController = {
         gender,
         mobileNumber: cleanMobile,
         countryCode,
+        location: location || null,
+        latitude: latitude || null,
+        longitude: longitude || null,
         otp: generatedOtp
       };
 
@@ -178,10 +181,16 @@ const authController = {
       // Record registration activity log
       try {
         const { parseUserAgent, getClientIp } = require("../utils/deviceParser");
+        const { resolveLocation } = require("../utils/locationResolver");
         const ActivityLog = require("../models/activityLogModel");
         const ipAddress = getClientIp(req);
         const uaString = req.headers["user-agent"] || "";
         const { device, browser, os } = parseUserAgent(uaString);
+
+        const clientLoc = req.body.location || decoded.location || null;
+        const clientLat = req.body.latitude || decoded.latitude || null;
+        const clientLng = req.body.longitude || decoded.longitude || null;
+        const resolvedLoc = await resolveLocation(clientLoc, clientLat, clientLng);
 
         await ActivityLog.create({
           userId: newUser.id,
@@ -191,6 +200,9 @@ const authController = {
           browser,
           os,
           userAgent: uaString,
+          location: resolvedLoc,
+          latitude: clientLat ? String(clientLat) : null,
+          longitude: clientLng ? String(clientLng) : null,
           status: "SUCCESS",
           loginTime: new Date()
         });
@@ -217,7 +229,7 @@ const authController = {
   },
   loginUser: async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, location, latitude, longitude } = req.body;
 
       if (!email || !password) {
         return res.status(400).json({ message: "Email and password are required" });
@@ -232,10 +244,12 @@ const authController = {
       if (user.isActive === false || user.isActive === 0) {
         try {
           const { parseUserAgent, getClientIp } = require('../utils/deviceParser');
+          const { resolveLocation } = require('../utils/locationResolver');
           const ActivityLog = require('../models/activityLogModel');
           const ipAddress = getClientIp(req);
           const uaString = req.headers['user-agent'] || '';
           const { device, browser, os } = parseUserAgent(uaString);
+          const resolvedLoc = await resolveLocation(location, latitude, longitude);
 
           await ActivityLog.create({
             userId: user.id,
@@ -245,6 +259,9 @@ const authController = {
             browser,
             os,
             userAgent: uaString,
+            location: resolvedLoc,
+            latitude: latitude ? String(latitude) : null,
+            longitude: longitude ? String(longitude) : null,
             status: 'DEACTIVATED',
             loginTime: new Date()
           });
@@ -260,10 +277,12 @@ const authController = {
       if (user.lockUntil && new Date(user.lockUntil) > new Date()) {
         try {
           const { parseUserAgent, getClientIp } = require('../utils/deviceParser');
+          const { resolveLocation } = require('../utils/locationResolver');
           const ActivityLog = require('../models/activityLogModel');
           const ipAddress = getClientIp(req);
           const uaString = req.headers['user-agent'] || '';
           const { device, browser, os } = parseUserAgent(uaString);
+          const resolvedLoc = await resolveLocation(location, latitude, longitude);
 
           await ActivityLog.create({
             userId: user.id,
@@ -273,6 +292,9 @@ const authController = {
             browser,
             os,
             userAgent: uaString,
+            location: resolvedLoc,
+            latitude: latitude ? String(latitude) : null,
+            longitude: longitude ? String(longitude) : null,
             status: 'LOCKED',
             loginTime: new Date()
           });
@@ -386,10 +408,12 @@ const authController = {
         // Record Failed Login Attempt
         try {
           const { parseUserAgent, getClientIp } = require('../utils/deviceParser');
+          const { resolveLocation } = require('../utils/locationResolver');
           const ActivityLog = require('../models/activityLogModel');
           const ipAddress = getClientIp(req);
           const uaString = req.headers['user-agent'] || '';
           const { device, browser, os } = parseUserAgent(uaString);
+          const resolvedLoc = await resolveLocation(location, latitude, longitude);
 
           await ActivityLog.create({
             userId: user.id,
@@ -399,6 +423,9 @@ const authController = {
             browser,
             os,
             userAgent: uaString,
+            location: resolvedLoc,
+            latitude: latitude ? String(latitude) : null,
+            longitude: longitude ? String(longitude) : null,
             status: 'FAILED',
             loginTime: new Date()
           });
@@ -427,7 +454,15 @@ const authController = {
       const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
       // Issue a temp token containing the OTP for stateless verification
-      const payload = { id: user.id, mobileNumber: user.mobileNumber, countryCode: user.countryCode, otp: generatedOtp };
+      const payload = { 
+        id: user.id, 
+        mobileNumber: user.mobileNumber, 
+        countryCode: user.countryCode, 
+        otp: generatedOtp,
+        location: location || null,
+        latitude: latitude || null,
+        longitude: longitude || null
+      };
       const tempToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1m" });
 
       const authKey = process.env.MSG91_AUTH_KEY ? process.env.MSG91_AUTH_KEY.trim() : null;
@@ -490,7 +525,7 @@ const authController = {
 
   verifyLoginOtp: async (req, res) => {
     try {
-      const { tempToken, otp } = req.body;
+      const { tempToken, otp, location, latitude, longitude } = req.body;
       if (!tempToken || !otp) {
         return res.status(400).json({ message: "Token and OTP are required" });
       }
@@ -507,6 +542,10 @@ const authController = {
         return res.status(404).json({ message: "User not found" });
       }
 
+      const clientLoc = location || decoded.location || null;
+      const clientLat = latitude || decoded.latitude || null;
+      const clientLng = longitude || decoded.longitude || null;
+
       if (decoded.otp !== otp) {
           // Allow bypass only for development when MSG91 is not configured
           if (!process.env.MSG91_AUTH_KEY && (otp === "1234" || otp === "123456")) {
@@ -514,10 +553,12 @@ const authController = {
           } else {
               try {
                 const { parseUserAgent, getClientIp } = require('../utils/deviceParser');
+                const { resolveLocation } = require('../utils/locationResolver');
                 const ActivityLog = require('../models/activityLogModel');
                 const ipAddress = getClientIp(req);
                 const uaString = req.headers['user-agent'] || '';
                 const { device, browser, os } = parseUserAgent(uaString);
+                const resolvedLoc = await resolveLocation(clientLoc, clientLat, clientLng);
 
                 await ActivityLog.create({
                   userId: user.id,
@@ -527,6 +568,9 @@ const authController = {
                   browser,
                   os,
                   userAgent: uaString,
+                  location: resolvedLoc,
+                  latitude: clientLat ? String(clientLat) : null,
+                  longitude: clientLng ? String(clientLng) : null,
                   status: 'FAILED',
                   loginTime: new Date()
                 });
@@ -557,10 +601,12 @@ const authController = {
       // Record Verified Login Session
       try {
         const { parseUserAgent, getClientIp } = require('../utils/deviceParser');
+        const { resolveLocation } = require('../utils/locationResolver');
         const ActivityLog = require('../models/activityLogModel');
         const ipAddress = getClientIp(req);
         const uaString = req.headers['user-agent'] || '';
         const { device, browser, os } = parseUserAgent(uaString);
+        const resolvedLoc = await resolveLocation(clientLoc, clientLat, clientLng);
 
         await ActivityLog.create({
           userId: user.id,
@@ -570,6 +616,9 @@ const authController = {
           browser,
           os,
           userAgent: uaString,
+          location: resolvedLoc,
+          latitude: clientLat ? String(clientLat) : null,
+          longitude: clientLng ? String(clientLng) : null,
           status: 'SUCCESS',
           loginTime: new Date()
         });

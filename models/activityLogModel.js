@@ -38,6 +38,18 @@ const ActivityLog = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    location: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    latitude: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    longitude: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
     status: {
       type: DataTypes.STRING(50),
       allowNull: false,
