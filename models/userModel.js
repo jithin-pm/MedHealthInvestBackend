@@ -93,6 +93,11 @@ const User = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
       defaultValue: null,
+    },
+    lastFailedAttempt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
     }
   },
   {

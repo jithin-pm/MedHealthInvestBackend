@@ -278,9 +278,12 @@ const authController = {
           });
         } catch (logErr) {}
 
-        const remainingHours = Math.ceil((new Date(user.lockUntil) - new Date()) / (1000 * 60 * 60));
+        const remainingMs = Math.max(0, new Date(user.lockUntil).getTime() - Date.now());
+        const remainingHours = Math.ceil(remainingMs / (1000 * 60 * 60));
         return res.status(403).json({ 
           isLocked: true,
+          lockUntil: user.lockUntil,
+          remainingMs,
           remainingHours,
           message: `Account is temporarily blocked due to 3 failed password attempts in a day. Please try again after ${remainingHours} hour(s) or contact support.` 
         });
@@ -292,11 +295,21 @@ const authController = {
         await user.save();
       }
 
-      // 3 attempts in a day rule: Reset attempts if more than 24 hours have passed since the previous failed attempt
+      // Helper to check calendar day in IST (Asia/Kolkata)
+      const getDayKey = (date) => {
+        try {
+          return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date(date));
+        } catch (e) {
+          return new Date(date).toISOString().split('T')[0];
+        }
+      };
+
+      // 3 attempts in a day rule: Reset count if a new day has arrived or 24 hours have passed
       const lastAttemptTime = user.lastFailedAttempt || user.updated_at;
       if (user.loginAttempts > 0 && lastAttemptTime) {
+        const isDifferentDay = getDayKey(lastAttemptTime) !== getDayKey(new Date());
         const msSinceLastAttempt = Date.now() - new Date(lastAttemptTime).getTime();
-        if (msSinceLastAttempt >= 24 * 60 * 60 * 1000) {
+        if (isDifferentDay || msSinceLastAttempt >= 24 * 60 * 60 * 1000) {
           user.loginAttempts = 0;
           user.lastFailedAttempt = null;
           await user.save();
@@ -307,10 +320,11 @@ const authController = {
       if (!isMatch) {
         // Calculate daily failed attempts
         const lastTime = user.lastFailedAttempt || user.updated_at;
+        const isDifferentDay = lastTime ? (getDayKey(lastTime) !== getDayKey(new Date())) : false;
         const msElapsed = lastTime ? (Date.now() - new Date(lastTime).getTime()) : Infinity;
 
-        if (user.loginAttempts > 0 && msElapsed >= 24 * 60 * 60 * 1000) {
-          // If previous attempt was over 24 hours ago, start fresh at 1 for today
+        if (user.loginAttempts > 0 && (isDifferentDay || msElapsed >= 24 * 60 * 60 * 1000)) {
+          // If previous attempt was from a previous day or > 24 hours ago, start fresh at 1 for today
           user.loginAttempts = 1;
         } else {
           user.loginAttempts = (user.loginAttempts || 0) + 1;
@@ -340,8 +354,11 @@ const authController = {
             }
           })();
 
+          const remainingMs = 24 * 60 * 60 * 1000;
           return res.status(403).json({ 
             isLocked: true,
+            lockUntil: user.lockUntil,
+            remainingMs,
             remainingHours: 24,
             message: "Account blocked for 24 hours due to 3 failed login attempts in a day. A security alert has been sent to your email." 
           });
@@ -392,7 +409,7 @@ const authController = {
         return res.status(400).json({ 
           isLocked: false,
           attemptsLeft,
-          message: `Invalid credentials. You have ${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} left today, after which your account will be blocked for 24 hours.` 
+          message: `Invalid credentials. ${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} remaining.` 
         });
       }
 

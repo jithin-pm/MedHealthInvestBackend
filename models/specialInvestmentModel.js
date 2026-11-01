@@ -56,6 +56,11 @@ const SpecialInvestment = sequelize.define(
       allowNull: false,
       defaultValue: "PENDING",
     },
+    gracePeriodEmailSent: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
   },
   {
     tableName: "special_investments",
