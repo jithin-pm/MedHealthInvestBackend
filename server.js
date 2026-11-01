@@ -158,12 +158,17 @@ const initializeDb = async () => {
       // Safe to ignore if tables or columns do not exist yet on initial run
     }
 
-    // Sync all models (creates missing tables or columns)
-    try {
-      await db.sync({ alter: true });
-      console.log("Database schema synchronized (alter enabled).");
-    } catch (syncErr) {
-      console.warn("Database sync {alter: true} failed, proceeding with manual updates:", syncErr.message);
+    // Sync models safely (avoids alter: true in production to prevent MySQL duplicate key errors)
+    if (process.env.DB_SYNC_ALTER === 'true') {
+      try {
+        await db.sync({ alter: true });
+        console.log("Database schema synchronized (alter enabled).");
+      } catch (syncErr) {
+        console.warn("Database sync {alter: true} failed:", syncErr.message);
+      }
+    } else {
+      await db.sync();
+      console.log("Database models synchronized.");
     }
 
     // Immediately expire any projects that are beyond the 90-day window
