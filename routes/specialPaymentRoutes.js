@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const specialPaymentController = require("../controllers/specialPaymentController");
+const { authMiddleware, adminMiddleware } = require("../middlewares/authMiddleware");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -43,7 +44,7 @@ router.post(
 );
 
 // Manual trigger for testing the cron job
-router.post("/trigger-monthly-interest", async (req, res) => {
+router.post("/trigger-monthly-interest", authMiddleware, adminMiddleware, async (req, res) => {
     const { runMonthlyInterestAccrual } = require('../utils/cronJobs');
     await runMonthlyInterestAccrual();
     res.json({ message: 'Cron job executed manually.' });
