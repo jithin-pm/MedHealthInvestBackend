@@ -1,5 +1,6 @@
 const cron = require('node-cron');
-const { Op } = require('sequelize');
+const { Op, Sequelize } = require('sequelize');
+const sequelize = require('../config/db');
 const SpecialInvestment = require('../models/specialInvestmentModel');
 const SpecialProject = require('../models/specialProjectModel');
 const SpecialInvestmentLedger = require('../models/specialInvestmentLedgerModel');
@@ -31,37 +32,85 @@ const runMonthlyInterestAccrual = async () => {
 
         console.log(`[CRON] Found ${activeInvestments.length} active investments to process.`);
 
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1; // 1-12 for SQL MONTH()
+        const cutoffDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
+
         for (const investment of activeInvestments) {
             const investmentDate = new Date(investment.created_at || investment.createdAt);
-            const now = new Date();
-            
-            const cutoffDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
 
             if (investmentDate >= cutoffDate) {
                 console.log(`[CRON] Skipping Investment ID: ${investment.id} (Invested ${investmentDate.toISOString()} - next payout will be next month)`);
                 continue;
             }
 
-            const principal = parseFloat(investment.amountInvested);
-            const roi = parseFloat(investment.project.roi);
-            
-            const interest = (principal * roi) / 100;
-            const newAccumulatedInterest = parseFloat(investment.accumulatedInterest || 0) + interest;
-            const totalBalance = parseFloat(investment.remainingCapital) + newAccumulatedInterest;
-
-            await SpecialInvestmentLedger.create({
-                specialInvestmentId: investment.id,
-                transactionType: 'INTEREST_ACCRUED',
-                amount: interest.toFixed(2),
-                balanceAfter: totalBalance.toFixed(2),
-                description: `Monthly Interest (${roi}%)`,
-                transactionDate: new Date()
+            // Check if interest for the current month has already accrued (idempotency check)
+            const existingAccrual = await SpecialInvestmentLedger.findOne({
+                where: {
+                    specialInvestmentId: investment.id,
+                    transactionType: 'INTEREST_ACCRUED',
+                    [Op.and]: [
+                        Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('transactionDate')), currentYear),
+                        Sequelize.where(Sequelize.fn('MONTH', Sequelize.col('transactionDate')), currentMonth)
+                    ]
+                }
             });
 
-            investment.accumulatedInterest = newAccumulatedInterest.toFixed(2);
-            await investment.save();
+            if (existingAccrual) {
+                console.log(`[CRON] Skipping Investment ID: ${investment.id} - interest for ${now.toLocaleString('default', { month: 'short', year: 'numeric' })} has already been accrued (Ledger ID: ${existingAccrual.id}).`);
+                continue;
+            }
 
-            console.log(`[CRON] Accrued ${interest.toFixed(2)} interest for Investment ID: ${investment.id}. New Accumulated Interest: ${newAccumulatedInterest.toFixed(2)}`);
+            // Use transaction to ensure safe accrual
+            await sequelize.transaction(async (t) => {
+                const lockedInvestment = await SpecialInvestment.findByPk(investment.id, {
+                    transaction: t,
+                    lock: true
+                });
+
+                if (!lockedInvestment || lockedInvestment.paybackStatus === 'PAID') {
+                    return;
+                }
+
+                // Re-verify inside lock to prevent race conditions
+                const doubleCheck = await SpecialInvestmentLedger.findOne({
+                    where: {
+                        specialInvestmentId: lockedInvestment.id,
+                        transactionType: 'INTEREST_ACCRUED',
+                        [Op.and]: [
+                            Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('transactionDate')), currentYear),
+                            Sequelize.where(Sequelize.fn('MONTH', Sequelize.col('transactionDate')), currentMonth)
+                        ]
+                    },
+                    transaction: t
+                });
+
+                if (doubleCheck) {
+                    return;
+                }
+
+                const principal = parseFloat(lockedInvestment.amountInvested);
+                const roi = parseFloat(investment.project.roi);
+                
+                const interest = (principal * roi) / 100;
+                const newAccumulatedInterest = parseFloat(lockedInvestment.accumulatedInterest || 0) + interest;
+                const totalBalance = parseFloat(lockedInvestment.remainingCapital) + newAccumulatedInterest;
+
+                await SpecialInvestmentLedger.create({
+                    specialInvestmentId: lockedInvestment.id,
+                    transactionType: 'INTEREST_ACCRUED',
+                    amount: interest.toFixed(2),
+                    balanceAfter: totalBalance.toFixed(2),
+                    description: `Monthly Interest (${roi}%)`,
+                    transactionDate: new Date()
+                }, { transaction: t });
+
+                lockedInvestment.accumulatedInterest = newAccumulatedInterest.toFixed(2);
+                await lockedInvestment.save({ transaction: t });
+
+                console.log(`[CRON] Accrued ${interest.toFixed(2)} interest for Investment ID: ${lockedInvestment.id}. New Accumulated Interest: ${newAccumulatedInterest.toFixed(2)}`);
+            });
         }
         
         console.log("[CRON] Monthly interest accrual completed.");
