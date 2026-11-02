@@ -11,7 +11,7 @@ const { generateNextCustomUserId } = require("../utils/generateCustomUserId");
 const authController = {
   registerUser: async (req, res) => {
     try {
-      const { fullName, email, password, gender, mobileNumber, countryCode, location, latitude, longitude } = req.body;
+      const { fullName, email, password, gender, mobileNumber, countryCode } = req.body;
 
       // Basic validation
       if (!fullName || !email || !password || !gender || !mobileNumber || !countryCode) {
@@ -60,9 +60,6 @@ const authController = {
         gender,
         mobileNumber: cleanMobile,
         countryCode,
-        location: location || null,
-        latitude: latitude || null,
-        longitude: longitude || null,
         otp: generatedOtp
       };
 
@@ -181,16 +178,10 @@ const authController = {
       // Record registration activity log
       try {
         const { parseUserAgent, getClientIp } = require("../utils/deviceParser");
-        const { resolveLocation } = require("../utils/locationResolver");
         const ActivityLog = require("../models/activityLogModel");
         const ipAddress = getClientIp(req);
         const uaString = req.headers["user-agent"] || "";
         const { device, browser, os } = parseUserAgent(uaString);
-
-        const clientLoc = req.body.location || decoded.location || null;
-        const clientLat = req.body.latitude || decoded.latitude || null;
-        const clientLng = req.body.longitude || decoded.longitude || null;
-        const resolvedLoc = await resolveLocation(clientLoc, clientLat, clientLng);
 
         await ActivityLog.create({
           userId: newUser.id,
@@ -200,9 +191,6 @@ const authController = {
           browser,
           os,
           userAgent: uaString,
-          location: resolvedLoc,
-          latitude: clientLat ? String(clientLat) : null,
-          longitude: clientLng ? String(clientLng) : null,
           status: "SUCCESS",
           loginTime: new Date()
         });
@@ -229,7 +217,7 @@ const authController = {
   },
   loginUser: async (req, res) => {
     try {
-      const { email, password, location, latitude, longitude } = req.body;
+      const { email, password } = req.body;
 
       if (!email || !password) {
         return res.status(400).json({ message: "Email and password are required" });
@@ -244,12 +232,10 @@ const authController = {
       if (user.isActive === false || user.isActive === 0) {
         try {
           const { parseUserAgent, getClientIp } = require('../utils/deviceParser');
-          const { resolveLocation } = require('../utils/locationResolver');
           const ActivityLog = require('../models/activityLogModel');
           const ipAddress = getClientIp(req);
           const uaString = req.headers['user-agent'] || '';
           const { device, browser, os } = parseUserAgent(uaString);
-          const resolvedLoc = await resolveLocation(location, latitude, longitude);
 
           await ActivityLog.create({
             userId: user.id,
@@ -259,17 +245,14 @@ const authController = {
             browser,
             os,
             userAgent: uaString,
-            location: resolvedLoc,
-            latitude: latitude ? String(latitude) : null,
-            longitude: longitude ? String(longitude) : null,
             status: 'DEACTIVATED',
             loginTime: new Date()
           });
-        } catch (logErr) {}
+        } catch (logErr) { }
 
-        return res.status(403).json({ 
+        return res.status(403).json({
           message: "Your account has been deactivated by administrator. Please contact support.",
-          isInactive: true 
+          isInactive: true
         });
       }
 
@@ -277,12 +260,10 @@ const authController = {
       if (user.lockUntil && new Date(user.lockUntil) > new Date()) {
         try {
           const { parseUserAgent, getClientIp } = require('../utils/deviceParser');
-          const { resolveLocation } = require('../utils/locationResolver');
           const ActivityLog = require('../models/activityLogModel');
           const ipAddress = getClientIp(req);
           const uaString = req.headers['user-agent'] || '';
           const { device, browser, os } = parseUserAgent(uaString);
-          const resolvedLoc = await resolveLocation(location, latitude, longitude);
 
           await ActivityLog.create({
             userId: user.id,
@@ -292,22 +273,19 @@ const authController = {
             browser,
             os,
             userAgent: uaString,
-            location: resolvedLoc,
-            latitude: latitude ? String(latitude) : null,
-            longitude: longitude ? String(longitude) : null,
             status: 'LOCKED',
             loginTime: new Date()
           });
-        } catch (logErr) {}
+        } catch (logErr) { }
 
         const remainingMs = Math.max(0, new Date(user.lockUntil).getTime() - Date.now());
         const remainingHours = Math.ceil(remainingMs / (1000 * 60 * 60));
-        return res.status(403).json({ 
+        return res.status(403).json({
           isLocked: true,
           lockUntil: user.lockUntil,
           remainingMs,
           remainingHours,
-          message: `Account is temporarily blocked due to 3 failed password attempts in a day. Please try again after ${remainingHours} hour(s) or contact support.` 
+          message: `Account is temporarily blocked due to 3 failed password attempts in a day. Please try again after ${remainingHours} hour(s) or contact support.`
         });
       } else if (user.lockUntil && new Date(user.lockUntil) <= new Date()) {
         // Automatically unblock if 24 hours have elapsed
@@ -377,12 +355,12 @@ const authController = {
           })();
 
           const remainingMs = 24 * 60 * 60 * 1000;
-          return res.status(403).json({ 
+          return res.status(403).json({
             isLocked: true,
             lockUntil: user.lockUntil,
             remainingMs,
             remainingHours: 24,
-            message: "Account blocked for 24 hours due to 3 failed login attempts in a day. A security alert has been sent to your email." 
+            message: "Account blocked for 24 hours due to 3 failed login attempts in a day. A security alert has been sent to your email."
           });
         }
 
@@ -408,12 +386,10 @@ const authController = {
         // Record Failed Login Attempt
         try {
           const { parseUserAgent, getClientIp } = require('../utils/deviceParser');
-          const { resolveLocation } = require('../utils/locationResolver');
           const ActivityLog = require('../models/activityLogModel');
           const ipAddress = getClientIp(req);
           const uaString = req.headers['user-agent'] || '';
           const { device, browser, os } = parseUserAgent(uaString);
-          const resolvedLoc = await resolveLocation(location, latitude, longitude);
 
           await ActivityLog.create({
             userId: user.id,
@@ -423,9 +399,6 @@ const authController = {
             browser,
             os,
             userAgent: uaString,
-            location: resolvedLoc,
-            latitude: latitude ? String(latitude) : null,
-            longitude: longitude ? String(longitude) : null,
             status: 'FAILED',
             loginTime: new Date()
           });
@@ -433,10 +406,10 @@ const authController = {
           console.error("Failed to record failed login log:", logErr.message);
         }
 
-        return res.status(400).json({ 
+        return res.status(400).json({
           isLocked: false,
           attemptsLeft,
-          message: `Invalid credentials. ${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} remaining.` 
+          message: `Invalid credentials. ${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} remaining.`
         });
       }
 
@@ -454,59 +427,51 @@ const authController = {
       const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
       // Issue a temp token containing the OTP for stateless verification
-      const payload = { 
-        id: user.id, 
-        mobileNumber: user.mobileNumber, 
-        countryCode: user.countryCode, 
-        otp: generatedOtp,
-        location: location || null,
-        latitude: latitude || null,
-        longitude: longitude || null
-      };
+      const payload = { id: user.id, mobileNumber: user.mobileNumber, countryCode: user.countryCode, otp: generatedOtp };
       const tempToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1m" });
 
       const authKey = process.env.MSG91_AUTH_KEY ? process.env.MSG91_AUTH_KEY.trim() : null;
       const templateId = process.env.MSG91_TEMPLATE_ID ? process.env.MSG91_TEMPLATE_ID.trim() : null;
       const senderId = process.env.MSG91_SENDER_ID ? process.env.MSG91_SENDER_ID.trim() : null;
-      
+
       // format mobile number without + sign
       const formattedCode = user.countryCode ? user.countryCode.replace(/\D/g, '') : '91';
       const formattedMobile = user.mobileNumber ? user.mobileNumber.replace(/\D/g, '') : '';
       const fullMobile = `${formattedCode}${formattedMobile}`;
-      
+
       if (authKey && templateId) {
-         try {
-           const axios = require('axios');
-           const options = {
-             method: 'POST',
-             url: 'https://control.msg91.com/api/v5/flow/',
-             headers: {
-               'authkey': authKey,
-               'content-type': 'application/json'
-             },
-             data: {
-               template_id: templateId,
-               short_url: "0",
-               recipients: [
-                 {
-                   mobiles: fullMobile,
-                   number: generatedOtp
-                 }
-               ]
-             }
-           };
-           
-           if (senderId) {
-               options.data.sender = senderId;
-           }
-           
-           console.log("MSG91 Calling Flow API for OTP delivery to:", fullMobile);
-           await axios(options);
-         } catch (err) {
-           console.error("MSG91 Error sending OTP:", err.response ? err.response.data : err.message);
-         }
+        try {
+          const axios = require('axios');
+          const options = {
+            method: 'POST',
+            url: 'https://control.msg91.com/api/v5/flow/',
+            headers: {
+              'authkey': authKey,
+              'content-type': 'application/json'
+            },
+            data: {
+              template_id: templateId,
+              short_url: "0",
+              recipients: [
+                {
+                  mobiles: fullMobile,
+                  number: generatedOtp
+                }
+              ]
+            }
+          };
+
+          if (senderId) {
+            options.data.sender = senderId;
+          }
+
+          console.log("MSG91 Calling Flow API for OTP delivery to:", fullMobile);
+          await axios(options);
+        } catch (err) {
+          console.error("MSG91 Error sending OTP:", err.response ? err.response.data : err.message);
+        }
       } else {
-         console.warn("MSG91 Auth Key or Template ID missing. OTP not sent. Use 1234 to bypass.");
+        console.warn("MSG91 Auth Key or Template ID missing. OTP not sent. Use 1234 to bypass.");
       }
 
       const mobileEnding = user.mobileNumber ? user.mobileNumber.slice(-4) : "****";
@@ -525,7 +490,7 @@ const authController = {
 
   verifyLoginOtp: async (req, res) => {
     try {
-      const { tempToken, otp, location, latitude, longitude } = req.body;
+      const { tempToken, otp } = req.body;
       if (!tempToken || !otp) {
         return res.status(400).json({ message: "Token and OTP are required" });
       }
@@ -542,42 +507,33 @@ const authController = {
         return res.status(404).json({ message: "User not found" });
       }
 
-      const clientLoc = location || decoded.location || null;
-      const clientLat = latitude || decoded.latitude || null;
-      const clientLng = longitude || decoded.longitude || null;
-
       if (decoded.otp !== otp) {
-          // Allow bypass only for development when MSG91 is not configured
-          if (!process.env.MSG91_AUTH_KEY && (otp === "1234" || otp === "123456")) {
-              // Proceed
-          } else {
-              try {
-                const { parseUserAgent, getClientIp } = require('../utils/deviceParser');
-                const { resolveLocation } = require('../utils/locationResolver');
-                const ActivityLog = require('../models/activityLogModel');
-                const ipAddress = getClientIp(req);
-                const uaString = req.headers['user-agent'] || '';
-                const { device, browser, os } = parseUserAgent(uaString);
-                const resolvedLoc = await resolveLocation(clientLoc, clientLat, clientLng);
+        // Allow bypass only for development when MSG91 is not configured
+        if (!process.env.MSG91_AUTH_KEY && (otp === "1234" || otp === "123456")) {
+          // Proceed
+        } else {
+          try {
+            const { parseUserAgent, getClientIp } = require('../utils/deviceParser');
+            const ActivityLog = require('../models/activityLogModel');
+            const ipAddress = getClientIp(req);
+            const uaString = req.headers['user-agent'] || '';
+            const { device, browser, os } = parseUserAgent(uaString);
 
-                await ActivityLog.create({
-                  userId: user.id,
-                  action: 'OTP_FAILED',
-                  ipAddress,
-                  device,
-                  browser,
-                  os,
-                  userAgent: uaString,
-                  location: resolvedLoc,
-                  latitude: clientLat ? String(clientLat) : null,
-                  longitude: clientLng ? String(clientLng) : null,
-                  status: 'FAILED',
-                  loginTime: new Date()
-                });
-              } catch (logErr) {}
+            await ActivityLog.create({
+              userId: user.id,
+              action: 'OTP_FAILED',
+              ipAddress,
+              device,
+              browser,
+              os,
+              userAgent: uaString,
+              status: 'FAILED',
+              loginTime: new Date()
+            });
+          } catch (logErr) { }
 
-              return res.status(400).json({ message: "Invalid OTP" });
-          }
+          return res.status(400).json({ message: "Invalid OTP" });
+        }
       }
 
       // Generate Tokens
@@ -601,12 +557,10 @@ const authController = {
       // Record Verified Login Session
       try {
         const { parseUserAgent, getClientIp } = require('../utils/deviceParser');
-        const { resolveLocation } = require('../utils/locationResolver');
         const ActivityLog = require('../models/activityLogModel');
         const ipAddress = getClientIp(req);
         const uaString = req.headers['user-agent'] || '';
         const { device, browser, os } = parseUserAgent(uaString);
-        const resolvedLoc = await resolveLocation(clientLoc, clientLat, clientLng);
 
         await ActivityLog.create({
           userId: user.id,
@@ -616,9 +570,6 @@ const authController = {
           browser,
           os,
           userAgent: uaString,
-          location: resolvedLoc,
-          latitude: clientLat ? String(clientLat) : null,
-          longitude: clientLng ? String(clientLng) : null,
           status: 'SUCCESS',
           loginTime: new Date()
         });
@@ -675,44 +626,44 @@ const authController = {
       const authKey = process.env.MSG91_AUTH_KEY ? process.env.MSG91_AUTH_KEY.trim() : null;
       const templateId = process.env.MSG91_TEMPLATE_ID ? process.env.MSG91_TEMPLATE_ID.trim() : null;
       const senderId = process.env.MSG91_SENDER_ID ? process.env.MSG91_SENDER_ID.trim() : null;
-      
+
       const formattedCode = user.countryCode ? user.countryCode.replace(/\D/g, '') : '91';
       const formattedMobile = user.mobileNumber ? user.mobileNumber.replace(/\D/g, '') : '';
       const fullMobile = `${formattedCode}${formattedMobile}`;
 
       if (authKey && templateId) {
-         try {
-           const axios = require('axios');
-           const options = {
-             method: 'POST',
-             url: 'https://control.msg91.com/api/v5/flow/',
-             headers: {
-               'authkey': authKey,
-               'content-type': 'application/json'
-             },
-             data: {
-               template_id: templateId,
-               short_url: "0",
-               recipients: [
-                 {
-                   mobiles: fullMobile,
-                   number: generatedOtp
-                 }
-               ]
-             }
-           };
-           
-           if (senderId) {
-               options.data.sender = senderId;
-           }
-           
-           console.log("MSG91 Calling Flow API for OTP delivery to:", fullMobile);
-           await axios(options);
-         } catch (err) {
-           console.error("MSG91 Error sending OTP:", err.response ? err.response.data : err.message);
-         }
+        try {
+          const axios = require('axios');
+          const options = {
+            method: 'POST',
+            url: 'https://control.msg91.com/api/v5/flow/',
+            headers: {
+              'authkey': authKey,
+              'content-type': 'application/json'
+            },
+            data: {
+              template_id: templateId,
+              short_url: "0",
+              recipients: [
+                {
+                  mobiles: fullMobile,
+                  number: generatedOtp
+                }
+              ]
+            }
+          };
+
+          if (senderId) {
+            options.data.sender = senderId;
+          }
+
+          console.log("MSG91 Calling Flow API for OTP delivery to:", fullMobile);
+          await axios(options);
+        } catch (err) {
+          console.error("MSG91 Error sending OTP:", err.response ? err.response.data : err.message);
+        }
       } else {
-         console.warn("MSG91 Auth Key or Template ID missing. OTP not sent. Use 1234 to bypass in dev.");
+        console.warn("MSG91 Auth Key or Template ID missing. OTP not sent. Use 1234 to bypass in dev.");
       }
 
       const mobileEnding = user.mobileNumber ? user.mobileNumber.slice(-4) : "****";
@@ -753,12 +704,12 @@ const authController = {
       }
 
       if (decoded.otp !== otp) {
-          // Allow bypass only for development when MSG91 is not configured
-          if (!process.env.MSG91_AUTH_KEY && (otp === "1234" || otp === "123456")) {
-              // Proceed
-          } else {
-              return res.status(400).json({ message: "Invalid OTP" });
-          }
+        // Allow bypass only for development when MSG91 is not configured
+        if (!process.env.MSG91_AUTH_KEY && (otp === "1234" || otp === "123456")) {
+          // Proceed
+        } else {
+          return res.status(400).json({ message: "Invalid OTP" });
+        }
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -795,7 +746,7 @@ const authController = {
     }
   },
 
-  
+
   adminRefreshToken: async (req, res) => {
     try {
       const refreshToken = (req.cookies && (req.cookies.adminRefreshToken || req.cookies.refreshToken)) || req.body?.refreshToken;
@@ -835,327 +786,509 @@ const authController = {
         return res.status(400).json({ message: "Invalid credentials" });
       }
 
+      // Generate 4-digit OTP
+      const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+
+      // Issue temporary stateless token for OTP verification
+      const payload = {
+        id: admin.id,
+        email: admin.email,
+        role: admin.role,
+        mobileNumber: admin.mobileNumber,
+        otp: generatedOtp,
+        isAdmin: true
+      };
+      const tempToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "10m" });
+
+      const authKey = process.env.MSG91_AUTH_KEY ? process.env.MSG91_AUTH_KEY.trim() : null;
+      const templateId = process.env.MSG91_TEMPLATE_ID ? process.env.MSG91_TEMPLATE_ID.trim() : null;
+      const senderId = process.env.MSG91_SENDER_ID ? process.env.MSG91_SENDER_ID.trim() : null;
+
+      const rawMobile = admin.mobileNumber ? admin.mobileNumber.replace(/\D/g, '') : '';
+      const fullMobile = rawMobile ? (rawMobile.startsWith('91') && rawMobile.length > 10 ? rawMobile : `91${rawMobile}`) : '';
+
+      if (authKey && templateId && fullMobile) {
+        try {
+          const axios = require('axios');
+          const options = {
+            method: 'POST',
+            url: 'https://control.msg91.com/api/v5/flow/',
+            headers: {
+              'authkey': authKey,
+              'content-type': 'application/json'
+            },
+            data: {
+              template_id: templateId,
+              short_url: "0",
+              sender: senderId || undefined,
+              recipients: [
+                {
+                  mobiles: fullMobile,
+                  number: generatedOtp
+                }
+              ]
+            }
+          };
+
+          console.log("MSG91 Calling Flow API for Admin OTP delivery to:", fullMobile);
+          await axios(options);
+        } catch (err) {
+          console.error("MSG91 Error sending Admin OTP:", err.response ? err.response.data : err.message);
+        }
+      } else {
+        console.warn("MSG91 Auth Key/Template ID missing or mobileNumber missing for admin. OTP not sent. OTP is:", generatedOtp);
+      }
+
+      const mobileEnding = rawMobile ? rawMobile.slice(-4) : "****";
+
+      return res.status(200).json({
+        message: "OTP sent to registered mobile number",
+        requiresOtp: true,
+        tempToken,
+        mobileEnding
+      });
+    } catch (error) {
+      console.error("Error in admin login:", error);
+      return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+  },
+
+  verifyAdminLoginOtp: async (req, res) => {
+    try {
+      const { tempToken, otp } = req.body;
+      if (!tempToken || !otp) {
+        return res.status(400).json({ message: "Token and OTP are required" });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
+      } catch (err) {
+        return res.status(401).json({ message: "Verification session expired. Please login again." });
+      }
+
+      if (!decoded.isAdmin || !decoded.id) {
+        return res.status(403).json({ message: "Invalid session for admin login" });
+      }
+
+      if (decoded.otp !== otp) {
+        // Allow bypass for dev only when MSG91 is not configured
+        if (!process.env.MSG91_AUTH_KEY && (otp === "1234" || otp === "123456")) {
+          // Proceed
+        } else {
+          return res.status(400).json({ message: "Invalid verification code. Please try again." });
+        }
+      }
+
+      const admin = await Admin.findByPk(decoded.id);
+      if (!admin) {
+        return res.status(404).json({ message: "Admin account not found" });
+      }
+
       // Generate Tokens
       const payload = { id: admin.id, role: admin.role };
       const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "70m" });
       const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 
-              // Set Refresh Token in HttpOnly Cookie with cross-site compatibility
-        const isProduction = process.env.NODE_ENV === "production" || !req.headers.host?.includes('localhost');
-        const cookieOpts = {
-          httpOnly: true,
-          secure: isProduction,
-          sameSite: isProduction ? "none" : "lax",
-          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        };
+      const isProduction = process.env.NODE_ENV === "production" || !req.headers.host?.includes('localhost');
+      const cookieOpts = {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      };
 
-        res.cookie("refreshToken", refreshToken, cookieOpts);
-        res.cookie("adminRefreshToken", refreshToken, cookieOpts);
+      res.cookie("refreshToken", refreshToken, cookieOpts);
+      res.cookie("adminRefreshToken", refreshToken, cookieOpts);
 
-        res.status(200).json({
+        return res.status(200).json({
           message: "Admin login successful",
           accessToken,
           refreshToken,
           role: admin.role,
-        user: {
-          id: admin.id,
-          fullName: admin.fullName,
-          email: admin.email,
-          role: admin.role
-        },
-      });
-    } catch (error) {
-      console.error("Error in admin login:", error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message });
-    }
-  },
-
-  
-  toggleUserStatus: async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const { isActive } = req.body;
-      const user = await User.findByPk(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+          user: {
+            id: admin.id,
+            fullName: admin.fullName,
+            email: admin.email,
+            mobileNumber: admin.mobileNumber,
+            role: admin.role
+          },
+        });
+      } catch (error) {
+        console.error("Error in verifyAdminLoginOtp:", error);
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
       }
+    },
 
-      const newStatus = typeof isActive === 'boolean' ? isActive : (user.isActive === false || user.isActive === 0 ? true : false);
-      user.isActive = newStatus;
-      await user.save();
-
-      res.status(200).json({
-        success: true,
-        message: `Account for ${user.fullName || user.email} has been ${newStatus ? 'activated' : 'marked as inactive'}.`,
-        user: {
-          id: user.id,
-          isActive: user.isActive,
+    resendAdminOtp: async (req, res) => {
+      try {
+        const { tempToken } = req.body;
+        if (!tempToken) {
+          return res.status(400).json({ message: "Token is required" });
         }
-      });
-    } catch (error) {
-      console.error("Error in toggleUserStatus:", error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message });
-    }
-  },
 
-  updateProfile: async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const { fullName, gender, mobileNumber, countryCode } = req.body;
-
-      const user = await User.findByPk(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      if (fullName) user.fullName = fullName.trim();
-      if (gender) user.gender = gender;
-      if (countryCode) user.countryCode = countryCode;
-      if (mobileNumber) {
-        const cleanMobile = String(mobileNumber).replace(/\D/g, "");
-        user.mobileNumber = cleanMobile;
-      }
-
-      await user.save();
-
-      const userSafe = user.toJSON();
-      delete userSafe.password;
-
-      res.status(200).json({
-        success: true,
-        message: "Profile updated successfully",
-        user: userSafe,
-      });
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message });
-    }
-  },
-
-  adminUpdateUser: async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const { fullName, email, gender, mobileNumber, countryCode } = req.body;
-
-      const user = await User.findByPk(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      if (email && email.toLowerCase() !== user.email.toLowerCase()) {
-        const existingEmail = await User.findOne({ where: { email: email.toLowerCase() } });
-        if (existingEmail && existingEmail.id !== user.id) {
-          return res.status(400).json({ message: "Email is already in use by another user" });
-        }
-        user.email = email.toLowerCase().trim();
-      }
-
-      if (fullName) user.fullName = fullName.trim();
-      if (gender) user.gender = gender;
-      if (countryCode) user.countryCode = countryCode;
-      if (mobileNumber) {
-        const cleanMobile = String(mobileNumber).replace(/\D/g, "");
-        user.mobileNumber = cleanMobile;
-      }
-
-      await user.save();
-
-      const userSafe = user.toJSON();
-      delete userSafe.password;
-
-      res.status(200).json({
-        success: true,
-        message: "User profile updated successfully",
-        user: userSafe,
-      });
-    } catch (error) {
-      console.error("Error in adminUpdateUser:", error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message });
-    }
-  },
-
-  unblockUser: async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const user = await User.findByPk(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      user.loginAttempts = 0;
-      user.lockUntil = null;
-      user.lastFailedAttempt = null;
-      await user.save();
-
-      // Dispatch unblock security notice from Hostinger email asynchronously
-      (async () => {
+        let decoded;
         try {
-          if (getAccountUnblockedTemplate) {
-            const emailHtml = getAccountUnblockedTemplate(user);
-            await sendEmail({
-              from: '"Med Health Invest Security" <noreply@medhealthinvest.com>',
-              replyTo: 'noreply@medhealthinvest.com',
-              to: user.email,
-              subject: '[Security Notice] Your Account Has Been Unblocked',
-              html: emailHtml
-            });
-            console.log(`[AUTH] Unblock notice sent to ${user.email} from noreply@medhealthinvest.com`);
-          }
+          decoded = jwt.verify(tempToken, process.env.JWT_SECRET, { ignoreExpiration: true });
         } catch (err) {
-          console.error(`[AUTH] Failed to send unblock notice to ${user.email}:`, err.message);
+          return res.status(401).json({ message: "Invalid or expired token" });
         }
-      })();
 
-      res.status(200).json({
-        success: true,
-        message: `Account for ${user.fullName || user.email} has been successfully unblocked.`,
-        user: {
-          id: user.id,
-          loginAttempts: user.loginAttempts,
-          lockUntil: user.lockUntil
+        if (!decoded.isAdmin || !decoded.id) {
+          return res.status(403).json({ message: "Invalid admin session" });
         }
-      });
-    } catch (error) {
-      console.error("Error in unblockUser:", error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message });
-    }
-  },
 
-  getAllUsers: async (req, res) => {
-    try {
-      const users = await User.findAll({
-        attributes: { exclude: ['password'] },
-        order: [['created_at', 'DESC']]
-      });
-      res.status(200).json(users);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message });
-    }
-  },
+        const admin = await Admin.findByPk(decoded.id);
+        if (!admin) {
+          return res.status(404).json({ message: "Admin not found" });
+        }
 
-  getVerificationStatus: async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const user = await User.findOne({
-        where: { id: userId },
-        attributes: [
-          'id',
-          'customUserId',
-          'isPanVerified', 
-          'isAadharVerified',
-          'isBankVerified',
-          'fullName',
-          'bankName',
-          'accountNumber',
-          'ifscCode',
-          'accountHolderName'
-        ]
-      });
-      const fs = require('fs');
-      const logData = {
-        timestamp: new Date().toISOString(),
-        reqUserId: userId,
-        userFound: user ? {
-          id: user.id,
-          fullName: user.fullName,
-          isPanVerified: user.isPanVerified,
-          isBankVerified: user.isBankVerified,
-          bankName: user.bankName,
-          accountNumber: user.accountNumber,
-          ifscCode: user.ifscCode,
-          accountHolderName: user.accountHolderName
-        } : null,
-      };
+        const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+        const payload = {
+          id: admin.id,
+          email: admin.email,
+          role: admin.role,
+          mobileNumber: admin.mobileNumber,
+          otp: generatedOtp,
+          isAdmin: true
+        };
+        const newTempToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "10m" });
 
-      let panDetails = null;
-      let bankDetails = null;
+        const authKey = process.env.MSG91_AUTH_KEY ? process.env.MSG91_AUTH_KEY.trim() : null;
+        const templateId = process.env.MSG91_TEMPLATE_ID ? process.env.MSG91_TEMPLATE_ID.trim() : null;
+        const senderId = process.env.MSG91_SENDER_ID ? process.env.MSG91_SENDER_ID.trim() : null;
 
-      if (user.isPanVerified === 1) {
-        panDetails = await PanDetails.findOne({ where: { userId } });
-        logData.panDetailsFound = panDetails ? panDetails.toJSON() : null;
+        const rawMobile = admin.mobileNumber ? admin.mobileNumber.replace(/\D/g, '') : '';
+        const fullMobile = rawMobile ? (rawMobile.startsWith('91') && rawMobile.length > 10 ? rawMobile : `91${rawMobile}`) : '';
+
+        if (authKey && templateId && fullMobile) {
+          try {
+            const axios = require('axios');
+            await axios({
+              method: 'POST',
+              url: 'https://control.msg91.com/api/v5/flow/',
+              headers: {
+                'authkey': authKey,
+                'content-type': 'application/json'
+              },
+              data: {
+                template_id: templateId,
+                short_url: "0",
+                sender: senderId || undefined,
+                recipients: [
+                  {
+                    mobiles: fullMobile,
+                    number: generatedOtp
+                  }
+                ]
+              }
+            });
+            console.log("MSG91 Resent Admin OTP to:", fullMobile);
+          } catch (err) {
+            console.error("MSG91 Error resending Admin OTP:", err.response ? err.response.data : err.message);
+          }
+        }
+
+        const mobileEnding = rawMobile ? rawMobile.slice(-4) : "****";
+
+        return res.status(200).json({
+          message: "New OTP sent to registered mobile number",
+          requiresOtp: true,
+          tempToken: newTempToken,
+          mobileEnding
+        });
+      } catch (error) {
+        console.error("Error in resendAdminOtp:", error);
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
       }
+    },
 
-      if (user.isBankVerified === 1) {
-        bankDetails = await BankDetails.findOne({ where: { userId } });
-        logData.bankDetailsFound = bankDetails ? bankDetails.toJSON() : null;
-      }
 
-      fs.appendFileSync('debug.log', JSON.stringify(logData, null, 2) + '\n---\n');
+      toggleUserStatus: async (req, res) => {
+        try {
+          const { userId } = req.params;
+          const { isActive } = req.body;
+          const user = await User.findByPk(userId);
+          if (!user) {
+            return res.status(404).json({ message: "User not found" });
+          }
 
-      res.status(200).json({
-        id: user.id,
-        customUserId: user.customUserId,
-        isPanVerified: user.isPanVerified === 1,
-        isAadharVerified: user.isAadharVerified === 1,
-        isBankVerified: user.isBankVerified === 1,
-        fullName: user.fullName,
-        bankName: user.bankName,
-        accountNumber: user.accountNumber,
-        ifscCode: user.ifscCode,
-        accountHolderName: user.accountHolderName,
-        panDetails,
-        bankDetails
-      });
-    } catch (error) {
-      console.error('Error fetching verification status:', error);
-      res.status(500).json({ message: 'Internal Server Error', error: error.message });
-    }
-  },
+          const newStatus = typeof isActive === 'boolean' ? isActive : (user.isActive === false || user.isActive === 0 ? true : false);
+          user.isActive = newStatus;
+          await user.save();
 
-  
-  getUserActivityLogs: async (req, res) => {
-    try {
-      const { userId } = req.params;
-      const user = await User.findByPk(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+          res.status(200).json({
+            success: true,
+            message: `Account for ${user.fullName || user.email} has been ${newStatus ? 'activated' : 'marked as inactive'}.`,
+            user: {
+              id: user.id,
+              isActive: user.isActive,
+            }
+          });
+        } catch (error) {
+          console.error("Error in toggleUserStatus:", error);
+          res.status(500).json({ message: "Internal Server Error", error: error.message });
+        }
+      },
 
-      const ActivityLog = require('../models/activityLogModel');
-      const logs = await ActivityLog.findAll({
-        where: { userId },
-        order: [['loginTime', 'DESC']],
-        limit: 100
-      });
+        updateProfile: async (req, res) => {
+          try {
+            const userId = req.user.id;
+            const { fullName, gender, mobileNumber, countryCode } = req.body;
 
-      res.status(200).json({
-        success: true,
-        user: {
-          id: user.id,
-          fullName: user.fullName,
-          email: user.email,
-          customUserId: user.customUserId,
-          lastSeen: user.lastSeen
+            const user = await User.findByPk(userId);
+            if (!user) {
+              return res.status(404).json({ message: "User not found" });
+            }
+
+            if (fullName) user.fullName = fullName.trim();
+            if (gender) user.gender = gender;
+            if (countryCode) user.countryCode = countryCode;
+            if (mobileNumber) {
+              const cleanMobile = String(mobileNumber).replace(/\D/g, "");
+              user.mobileNumber = cleanMobile;
+            }
+
+            await user.save();
+
+            const userSafe = user.toJSON();
+            delete userSafe.password;
+
+            res.status(200).json({
+              success: true,
+              message: "Profile updated successfully",
+              user: userSafe,
+            });
+          } catch (error) {
+            console.error("Error updating profile:", error);
+            res.status(500).json({ message: "Internal Server Error", error: error.message });
+          }
         },
-        logs
-      });
-    } catch (error) {
-      console.error("Error fetching user activity logs:", error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message });
-    }
-  },
 
-  extendSession: async (req, res) => {
-    try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader) return res.status(401).json({ message: "No token provided" });
-      
-      const token = authHeader.split(" ")[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
-      
-      const newToken = jwt.sign(
-        { id: decoded.id, role: decoded.role },
-        process.env.JWT_SECRET,
-        { expiresIn: "70m" }
-      );
-      
-      res.status(200).json({ accessToken: newToken });
-    } catch (error) {
-      console.error("Error extending session:", error);
-      res.status(500).json({ message: "Session extension failed" });
-    }
-  },
+          adminUpdateUser: async (req, res) => {
+            try {
+              const { userId } = req.params;
+              const { fullName, email, gender, mobileNumber, countryCode } = req.body;
+
+              const user = await User.findByPk(userId);
+              if (!user) {
+                return res.status(404).json({ message: "User not found" });
+              }
+
+              if (email && email.toLowerCase() !== user.email.toLowerCase()) {
+                const existingEmail = await User.findOne({ where: { email: email.toLowerCase() } });
+                if (existingEmail && existingEmail.id !== user.id) {
+                  return res.status(400).json({ message: "Email is already in use by another user" });
+                }
+                user.email = email.toLowerCase().trim();
+              }
+
+              if (fullName) user.fullName = fullName.trim();
+              if (gender) user.gender = gender;
+              if (countryCode) user.countryCode = countryCode;
+              if (mobileNumber) {
+                const cleanMobile = String(mobileNumber).replace(/\D/g, "");
+                user.mobileNumber = cleanMobile;
+              }
+
+              await user.save();
+
+              const userSafe = user.toJSON();
+              delete userSafe.password;
+
+              res.status(200).json({
+                success: true,
+                message: "User profile updated successfully",
+                user: userSafe,
+              });
+            } catch (error) {
+              console.error("Error in adminUpdateUser:", error);
+              res.status(500).json({ message: "Internal Server Error", error: error.message });
+            }
+          },
+
+            unblockUser: async (req, res) => {
+              try {
+                const { userId } = req.params;
+                const user = await User.findByPk(userId);
+                if (!user) {
+                  return res.status(404).json({ message: "User not found" });
+                }
+
+                user.loginAttempts = 0;
+                user.lockUntil = null;
+                user.lastFailedAttempt = null;
+                await user.save();
+
+                // Dispatch unblock security notice from Hostinger email asynchronously
+                (async () => {
+                  try {
+                    if (getAccountUnblockedTemplate) {
+                      const emailHtml = getAccountUnblockedTemplate(user);
+                      await sendEmail({
+                        from: '"Med Health Invest Security" <noreply@medhealthinvest.com>',
+                        replyTo: 'noreply@medhealthinvest.com',
+                        to: user.email,
+                        subject: '[Security Notice] Your Account Has Been Unblocked',
+                        html: emailHtml
+                      });
+                      console.log(`[AUTH] Unblock notice sent to ${user.email} from noreply@medhealthinvest.com`);
+                    }
+                  } catch (err) {
+                    console.error(`[AUTH] Failed to send unblock notice to ${user.email}:`, err.message);
+                  }
+                })();
+
+                res.status(200).json({
+                  success: true,
+                  message: `Account for ${user.fullName || user.email} has been successfully unblocked.`,
+                  user: {
+                    id: user.id,
+                    loginAttempts: user.loginAttempts,
+                    lockUntil: user.lockUntil
+                  }
+                });
+              } catch (error) {
+                console.error("Error in unblockUser:", error);
+                res.status(500).json({ message: "Internal Server Error", error: error.message });
+              }
+            },
+
+              getAllUsers: async (req, res) => {
+                try {
+                  const users = await User.findAll({
+                    attributes: { exclude: ['password'] },
+                    order: [['created_at', 'DESC']]
+                  });
+                  res.status(200).json(users);
+                } catch (error) {
+                  console.error("Error fetching users:", error);
+                  res.status(500).json({ message: "Internal Server Error", error: error.message });
+                }
+              },
+
+                getVerificationStatus: async (req, res) => {
+                  try {
+                    const { userId } = req.params;
+                    const user = await User.findOne({
+                      where: { id: userId },
+                      attributes: [
+                        'id',
+                        'customUserId',
+                        'isPanVerified',
+                        'isAadharVerified',
+                        'isBankVerified',
+                        'fullName',
+                        'bankName',
+                        'accountNumber',
+                        'ifscCode',
+                        'accountHolderName'
+                      ]
+                    });
+                    const fs = require('fs');
+                    const logData = {
+                      timestamp: new Date().toISOString(),
+                      reqUserId: userId,
+                      userFound: user ? {
+                        id: user.id,
+                        fullName: user.fullName,
+                        isPanVerified: user.isPanVerified,
+                        isBankVerified: user.isBankVerified,
+                        bankName: user.bankName,
+                        accountNumber: user.accountNumber,
+                        ifscCode: user.ifscCode,
+                        accountHolderName: user.accountHolderName
+                      } : null,
+                    };
+
+                    let panDetails = null;
+                    let bankDetails = null;
+
+                    if (user.isPanVerified === 1) {
+                      panDetails = await PanDetails.findOne({ where: { userId } });
+                      logData.panDetailsFound = panDetails ? panDetails.toJSON() : null;
+                    }
+
+                    if (user.isBankVerified === 1) {
+                      bankDetails = await BankDetails.findOne({ where: { userId } });
+                      logData.bankDetailsFound = bankDetails ? bankDetails.toJSON() : null;
+                    }
+
+                    fs.appendFileSync('debug.log', JSON.stringify(logData, null, 2) + '\n---\n');
+
+                    res.status(200).json({
+                      id: user.id,
+                      customUserId: user.customUserId,
+                      isPanVerified: user.isPanVerified === 1,
+                      isAadharVerified: user.isAadharVerified === 1,
+                      isBankVerified: user.isBankVerified === 1,
+                      fullName: user.fullName,
+                      bankName: user.bankName,
+                      accountNumber: user.accountNumber,
+                      ifscCode: user.ifscCode,
+                      accountHolderName: user.accountHolderName,
+                      panDetails,
+                      bankDetails
+                    });
+                  } catch (error) {
+                    console.error('Error fetching verification status:', error);
+                    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+                  }
+                },
+
+
+                  getUserActivityLogs: async (req, res) => {
+                    try {
+                      const { userId } = req.params;
+                      const user = await User.findByPk(userId);
+                      if (!user) {
+                        return res.status(404).json({ message: "User not found" });
+                      }
+
+                      const ActivityLog = require('../models/activityLogModel');
+                      const logs = await ActivityLog.findAll({
+                        where: { userId },
+                        order: [['loginTime', 'DESC']],
+                        limit: 100
+                      });
+
+                      res.status(200).json({
+                        success: true,
+                        user: {
+                          id: user.id,
+                          fullName: user.fullName,
+                          email: user.email,
+                          customUserId: user.customUserId,
+                          lastSeen: user.lastSeen
+                        },
+                        logs
+                      });
+                    } catch (error) {
+                      console.error("Error fetching user activity logs:", error);
+                      res.status(500).json({ message: "Internal Server Error", error: error.message });
+                    }
+                  },
+
+                    extendSession: async (req, res) => {
+                      try {
+                        const authHeader = req.headers.authorization;
+                        if (!authHeader) return res.status(401).json({ message: "No token provided" });
+
+                        const token = authHeader.split(" ")[1];
+                        const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+
+                        const newToken = jwt.sign(
+                          { id: decoded.id, role: decoded.role },
+                          process.env.JWT_SECRET,
+                          { expiresIn: "70m" }
+                        );
+
+                        res.status(200).json({ accessToken: newToken });
+                      } catch (error) {
+                        console.error("Error extending session:", error);
+                        res.status(500).json({ message: "Session extension failed" });
+                      }
+                    },
 };
 
-module.exports = authController;
+  module.exports = authController;

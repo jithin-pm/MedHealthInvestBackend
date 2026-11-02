@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
 const { authMiddleware } = require("../middlewares/authMiddleware");
@@ -10,6 +10,8 @@ router.post("/verify-login-otp", authController.verifyLoginOtp);
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 router.post("/admin-login", authController.adminLogin);
+router.post("/verify-admin-login-otp", authController.verifyAdminLoginOtp);
+router.post("/resend-admin-otp", authController.resendAdminOtp);
 router.post("/refresh", authController.refreshToken);
 router.post("/admin-refresh", authController.adminRefreshToken);
 router.get("/all-users", authController.getAllUsers);

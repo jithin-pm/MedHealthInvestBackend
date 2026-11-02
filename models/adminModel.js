@@ -21,6 +21,10 @@ const Admin = sequelize.define(
         isEmail: true,
       },
     },
+    mobileNumber: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+    },
     password: {
       type: DataTypes.STRING(255),
       allowNull: false,
