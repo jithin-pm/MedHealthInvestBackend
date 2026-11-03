@@ -358,7 +358,7 @@ const getFailedLoginAttemptTemplate = (user, attemptsLeft) => {
     <p><strong>Did not attempt to sign in?</strong><br>
     If you did not perform these sign-in attempts, your account credentials may be compromised. Please contact MedHealth Invest support immediately.</p>
 
-    <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}/contact" class="button" style="background-color: #c62828;">Contact Security Support</a>
+    <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}" class="button" style="background-color: #c62828;">Contact Security Support</a>
   ` : `
     <div style="display: inline-block; padding: 6px 14px; border-radius: 8px; background-color: #fff3e0; color: #e65100; font-weight: 700; font-size: 13px; text-transform: uppercase; margin-bottom: 20px;">
       Security Warning • Failed Sign-In Attempt
