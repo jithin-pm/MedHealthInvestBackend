@@ -1291,4 +1291,257 @@ const authController = {
                     },
 };
 
-  module.exports = authController;
+authController.adminForgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Admin email address is required" });
+    }
+
+    const admin = await Admin.findOne({ where: { email: email.trim().toLowerCase() } });
+    if (!admin) {
+      return res.status(404).json({ message: "No administrative account registered with this email" });
+    }
+
+    // Generate 4-digit OTP
+    const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+
+    // Issue temporary stateless token for OTP verification (10 minutes)
+    const payload = {
+      id: admin.id,
+      email: admin.email,
+      otp: generatedOtp,
+      type: 'ADMIN_RESET'
+    };
+    const tempToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "10m" });
+
+    // Send SMS via MSG91 if configured
+    const authKey = process.env.MSG91_AUTH_KEY ? process.env.MSG91_AUTH_KEY.trim() : null;
+    const templateId = process.env.MSG91_TEMPLATE_ID ? process.env.MSG91_TEMPLATE_ID.trim() : null;
+    const senderId = process.env.MSG91_SENDER_ID ? process.env.MSG91_SENDER_ID.trim() : null;
+
+    const rawMobile = admin.mobileNumber ? admin.mobileNumber.replace(/\D/g, '') : '';
+    const fullMobile = rawMobile ? (rawMobile.startsWith('91') && rawMobile.length > 10 ? rawMobile : `91${rawMobile}`) : '';
+
+    if (authKey && templateId && fullMobile) {
+      try {
+        const axios = require('axios');
+        await axios({
+          method: 'POST',
+          url: 'https://control.msg91.com/api/v5/flow/',
+          headers: {
+            'authkey': authKey,
+            'content-type': 'application/json'
+          },
+          data: {
+            template_id: templateId,
+            short_url: "0",
+            sender: senderId || undefined,
+            recipients: [
+              {
+                mobiles: fullMobile,
+                number: generatedOtp
+              }
+            ]
+          }
+        });
+        console.log("MSG91 Sent Admin Password Reset OTP to mobile:", fullMobile);
+      } catch (err) {
+        console.error("MSG91 Error sending Admin Reset OTP:", err.response ? err.response.data : err.message);
+      }
+    }
+
+    // Also send OTP via Email
+    try {
+      await sendEmail({
+        from: '"Med Health Invest Security" <noreply@medhealthinvest.com>',
+        replyTo: 'noreply@medhealthinvest.com',
+        to: admin.email,
+        subject: '[MedHealth Invest] Admin Password Reset Code',
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0c0c0c; color: #ffffff; padding: 32px; border-radius: 16px; max-width: 500px; margin: 0 auto; border: 1px solid #222;">
+            <div style="margin-bottom: 24px; text-align: center;">
+              <h2 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 800;">ADMIN SECURITY VERIFICATION</h2>
+              <p style="color: #888; font-size: 13px; margin-top: 6px;">Password Reset Authorization Code</p>
+            </div>
+            <div style="background: rgba(204,255,0,0.08); border: 1px solid rgba(204,255,0,0.25); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 24px;">
+              <span style="font-size: 11px; font-weight: 700; color: #ccff00; letter-spacing: 2px; text-transform: uppercase;">One-Time Security Code</span>
+              <div style="font-size: 32px; font-weight: 900; letter-spacing: 8px; color: #ffffff; margin-top: 8px; font-family: monospace;">${generatedOtp}</div>
+            </div>
+            <p style="color: #aaa; font-size: 13px; line-height: 1.6;">
+              Use this 4-digit code to complete your admin password reset. This code is valid for <strong>10 minutes</strong>.
+            </p>
+            <p style="color: #666; font-size: 11px; margin-top: 24px; border-top: 1px solid #1a1a1a; padding-top: 16px;">
+              If you did not request a password reset, your administrative credentials may be compromised. Please secure your account immediately.
+            </p>
+          </div>
+        `
+      });
+      console.log("Sent Admin Password Reset OTP to email:", admin.email);
+    } catch (mailErr) {
+      console.error("Error sending Admin Reset email:", mailErr.message);
+    }
+
+    console.log(`[AUTH] Admin Password Reset OTP for ${admin.email} is: ${generatedOtp}`);
+
+    const mobileEnding = rawMobile ? rawMobile.slice(-4) : "****";
+    return res.status(200).json({
+      message: "Verification code dispatched successfully",
+      tempToken,
+      mobileEnding,
+      email: admin.email
+    });
+  } catch (error) {
+    console.error("Error in adminForgotPassword:", error);
+    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+authController.adminResetPassword = async (req, res) => {
+  try {
+    const { tempToken, otp, newPassword } = req.body;
+
+    if (!tempToken || !otp || !newPassword) {
+      return res.status(400).json({ message: "Token, verification code, and new password are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long" });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Verification session has expired. Please request a new code." });
+    }
+
+    if (decoded.type !== 'ADMIN_RESET') {
+      return res.status(400).json({ message: "Invalid reset token type" });
+    }
+
+    if (decoded.otp !== otp) {
+      if (!process.env.MSG91_AUTH_KEY && (otp === "1234" || otp === "123456")) {
+        // Dev bypass
+      } else {
+        return res.status(400).json({ message: "Invalid verification code. Please check and try again." });
+      }
+    }
+
+    const admin = await Admin.findByPk(decoded.id);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin account not found" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    admin.password = await bcrypt.hash(newPassword, salt);
+    await admin.save();
+
+    return res.status(200).json({ message: "Admin password reset successfully. Please log in with your new password." });
+  } catch (error) {
+    console.error("Error in adminResetPassword:", error);
+    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+authController.adminChangePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Current password and new password are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters long" });
+    }
+
+    const adminId = req.user?.id;
+    if (!adminId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const admin = await Admin.findByPk(adminId);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin account not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, admin.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    admin.password = await bcrypt.hash(newPassword, salt);
+    await admin.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Error in adminChangePassword:", error);
+    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+authController.adminResetUserPassword = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters long" });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User account not found" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    user.loginAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
+
+    // Log activity
+    try {
+      const ActivityLog = require("../models/activityLogModel");
+      await ActivityLog.create({
+        userId: user.id,
+        action: 'PASSWORD_RESET_BY_ADMIN',
+        ipAddress: req.ip || req.connection?.remoteAddress || '127.0.0.1',
+        userAgent: req.headers['user-agent'] || 'Admin Action',
+        device: 'Admin Console'
+      });
+    } catch (logErr) {
+      console.warn("Could not log password reset activity:", logErr.message);
+    }
+
+    // Notify user via Email
+    try {
+      await sendEmail({
+        from: '"Med Health Invest Security" <noreply@medhealthinvest.com>',
+        replyTo: 'noreply@medhealthinvest.com',
+        to: user.email,
+        subject: '[MedHealth Invest] Your Password Has Been Reset by Admin',
+        html: `
+          <div style="font-family:sans-serif;background:#0c0c0c;color:#fff;padding:28px;border-radius:12px;max-width:500px;margin:0 auto;border:1px solid #222;">
+            <h2 style="color:#ccff00;margin-top:0;">Password Reset Notice</h2>
+            <p>Hello ${user.fullName},</p>
+            <p>Your MedHealth Invest account password has been reset by administrative support.</p>
+            <p>If you were provided a temporary password, please sign in and change your password immediately.</p>
+            <p style="color:#888;font-size:12px;margin-top:20px;border-top:1px solid #222;padding-top:12px;">If you did not request this assistance, please contact MedHealth Invest compliance immediately.</p>
+          </div>
+        `
+      });
+    } catch (mailErr) {
+      console.warn("Could not send password reset notification email to user:", mailErr.message);
+    }
+
+    return res.status(200).json({ message: `Password for ${user.fullName} has been reset successfully.` });
+  } catch (error) {
+    console.error("Error in adminResetUserPassword:", error);
+    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+module.exports = authController;
