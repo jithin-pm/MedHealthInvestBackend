@@ -8,7 +8,7 @@ const getProjectLaunchTemplate = (project, user = {}) => {
   const yearlyRoi = (Number(roi || 0) * 12).toFixed(1).replace(/\.0$/, '');
 
   const content = `
-    <p>A new strategic investment opportunity is now available on our platform. We thought you might be interested in expanding your portfolio with this latest offering.</p>
+    <p>A new strategic investment opportunity is now available on our platform. We thought you might be interested in expanding your investments with this latest offering.</p>
     
     <div style="display: inline-block; padding: 6px 14px; border-radius: 8px; background-color: #e8f5e9; color: #00c853; font-weight: 700; font-size: 13px; text-transform: uppercase; margin-bottom: 20px;">
       ${roi}% Monthly ROI • ${yearlyRoi}% Yearly ROI • Min. Investment ₹${formattedMinInvestment}
@@ -351,9 +351,9 @@ const getGracePeriodNotificationTemplate = (investment, project, user = {}, refe
     <p><strong>What happens next?</strong></p>
     <p>Starting from <strong>${formattedFirstPayoutDate}</strong>, your monthly contracted returns of <strong>${roi}%</strong> will begin accruing and will be credited to your ledger on the 1st of each subsequent month.</p>
     
-    <p>You can track your investment portfolio, monthly accruals, and transaction records in real-time through your investor dashboard.</p>
+    <p>You can track your investments, monthly accruals, and transaction records in real-time through your investor dashboard.</p>
     
-    <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}/profile" class="button">View My Portfolio</a>
+    <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}/profile" class="button">View My Investments</a>
   `;
 
   return wrapInBaseLayout(`Investment Grace Period Commenced`, content, userName);
@@ -404,7 +404,7 @@ const getFailedLoginAttemptTemplate = (user, attemptsLeft) => {
       </div>
     </div>
 
-    <p>To protect your portfolio and sensitive financial assets, your account has been temporarily locked. You will be able to attempt login again after 24 hours.</p>
+    <p>To protect your account and sensitive financial assets, your account has been temporarily locked. You will be able to attempt login again after 24 hours.</p>
 
     <p><strong>Did not attempt to sign in?</strong><br>
     If you did not perform these sign-in attempts, your account credentials may be compromised. Please contact MedHealth Invest support immediately.</p>
