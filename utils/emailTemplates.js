@@ -6,7 +6,7 @@ const getProjectLaunchTemplate = (project, user = {}) => {
   const minInvestmentAmount = project.minInvestmentAmount ?? (project.get ? project.get('minInvestmentAmount') : 1000);
   const formattedMinInvestment = Number(minInvestmentAmount || 1000).toLocaleString('en-IN');
   const yearlyRoi = (Number(roi || 0) * 12).toFixed(1).replace(/\.0$/, '');
-  
+
   const content = `
     <p>A new strategic investment opportunity is now available on our platform. We thought you might be interested in expanding your portfolio with this latest offering.</p>
     
@@ -84,25 +84,67 @@ const getProjectOngoingTemplate = (project, user = {}) => {
   return wrapInBaseLayout(`Project is now Ongoing`, content, userName);
 };
 
-const getProjectCompletedTemplate = (project, user = {}) => {
-  const { projectName, roi } = project;
+const getProjectCompletedTemplate = (project, user = {}, investment = null) => {
+  const { projectName, roi, duration } = project;
   const userName = user.fullName || 'Investor';
 
+  // Amount invested and total amount received/credited
+  const investedAmount = typeof investment === 'object' && investment !== null 
+    ? Number(investment.amount || 0) 
+    : (typeof investment === 'number' ? investment : 0);
+
+  const dur = Number(duration || 1);
+  const monthlyRoi = Number(roi || 0);
+  const yearlyRoi = (monthlyRoi * 12).toFixed(1).replace(/\.0$/, '');
+  const yieldAmount = investedAmount > 0 ? (investedAmount * monthlyRoi * dur) / 100 : 0;
+  const totalCredited = investedAmount > 0 ? (investedAmount + yieldAmount) : 0;
+
   const content = `
-    <p>We are excited to announce that <strong>${projectName}</strong> has successfully reached its full maturity. Your portfolio has been updated accordingly.</p>
+    <p>We are excited to announce that <strong>${projectName}</strong> has successfully completed its lifecycle and reached full maturity. Your settlement payout has been processed.</p>
     
-    <div class="project-card" style="text-align: center; background-color: #e8f5e9;">
-      <div class="detail-label" style="color: #00c853;">Portfolio Status</div>
-      <div style="font-size: 24px; font-weight: 700; color: #004d40; margin: 10px 0;">MATURED & VERIFIED</div>
-      <div class="detail-value">ROI: ${roi}% Achieved</div>
+    <div class="project-card" style="background-color: #f0fdf4; border: 1.5px solid #bbf7d0;">
+      <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #dcfce7; margin-bottom: 20px;">
+        <div class="detail-label" style="color: #16a34a; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">Project Status</div>
+        <div style="font-size: 24px; font-weight: 800; color: #14532d; margin: 8px 0;">COMPLETED & AMOUNT CREDITED</div>
+        <div style="font-size: 13px; color: #15803d; font-weight: 600;">Full Capital + Yield Distribution Finalized</div>
+      </div>
+
+      <div class="detail-item">
+        <div class="detail-label">Project Name</div>
+        <div class="detail-value" style="color: #14532d; font-weight: 700;">${projectName}</div>
+      </div>
+
+      ${investedAmount > 0 ? `
+      <div class="detail-item">
+        <div class="detail-label">Principal Amount Invested</div>
+        <div class="detail-value">₹${investedAmount.toLocaleString('en-IN')}</div>
+      </div>
+
+      <div class="detail-item">
+        <div class="detail-label" style="color: #16a34a; font-weight: 700;">Amount Received / Credited</div>
+        <div class="detail-value" style="color: #16a34a; font-size: 24px; font-weight: 800;">₹${totalCredited.toLocaleString('en-IN')}</div>
+      </div>
+      ` : ''}
+
+      <div class="detail-item">
+        <div class="detail-label">Contracted Return (ROI)</div>
+        <div class="detail-value">${monthlyRoi}% Monthly (${yearlyRoi}% Yearly) • Achieved</div>
+      </div>
+
+      ${duration ? `
+      <div class="detail-item" style="margin-bottom: 0;">
+        <div class="detail-label">Duration Completed</div>
+        <div class="detail-value">${duration} Months</div>
+      </div>
+      ` : ''}
     </div>
     
-    <p>Kindly review your account details to ensure a seamless settlement of your principal and accumulated yields. Be seen, act quickly to re-invest or withdraw.</p>
+    <p>Your principal capital and accumulated yield profit have been successfully credited. Please review your account transaction history and settlement details in your dashboard profile.</p>
     
     <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}/profile" class="button">Check Settlement</a>
   `;
 
-  return wrapInBaseLayout(`Project Matured Successfully`, content, userName);
+  return wrapInBaseLayout(`Project Completed: ${projectName} - Amount Credited`, content, userName);
 };
 
 const getPreSettledInvestmentTemplate = (project, user = {}) => {
@@ -188,17 +230,17 @@ const getProjectCompletionReminderAdminTemplate = (project, daysRemaining, admin
   const { projectName, roi, duration, projectCategory, projectType } = project;
   const adminName = adminUser.fullName || 'Administrator';
   const target = project.targetAmount ? Number(project.targetAmount).toLocaleString('en-IN') : '0';
-  const formattedDate = project.completionDate 
+  const formattedDate = project.completionDate
     ? new Date(project.completionDate).toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      })
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    })
     : 'Upcoming';
 
   const isOneDay = daysRemaining <= 1;
-  const headline = isOneDay 
-    ? 'Critical Alert: Project Completing in 1 Day' 
+  const headline = isOneDay
+    ? 'Critical Alert: Project Completing in 1 Day'
     : 'Reminder: Project Completing in 30 Days';
 
   const urgencyBadgeColor = isOneDay ? '#e53935' : '#ff9800';
@@ -234,10 +276,9 @@ const getProjectCompletionReminderAdminTemplate = (project, daysRemaining, admin
       </div>
     </div>
     
-    <p>${
-      isOneDay 
-        ? '<strong>Action Required:</strong> This project will conclude tomorrow. Please review investor yield ledgers, verify bank accounts, and prepare for payout settlement initiation.'
-        : '<strong>Advance Notice:</strong> This project will reach its full commitment term in 30 days. Please monitor ongoing performance and begin scheduling capital and yield payouts.'
+    <p>${isOneDay
+      ? '<strong>Action Required:</strong> This project will conclude tomorrow. Please review investor yield ledgers, verify bank accounts, and prepare for payout settlement initiation.'
+      : '<strong>Advance Notice:</strong> This project will reach its full commitment term in 30 days. Please monitor ongoing performance and begin scheduling capital and yield payouts.'
     }</p>
     
     <a href="${process.env.ADMIN_URL || 'http://localhost:5174'}/dashboard/project-reminders" class="button" style="background-color: #00c853; color: #ffffff !important;">Review in Admin Reminders</a>
@@ -445,4 +486,5 @@ module.exports = {
   getAccountUnblockedTemplate,
   getFailedLoginAttemptTemplate,
   getGracePeriodNotificationTemplate,
-  getProjectCompletionReminderAdminTemplate, getProjectLaunchTemplate, getProjectOngoingTemplate, getProjectCompletedTemplate, getPreSettledInvestmentTemplate, getInvestmentSuccessTemplate };
+  getProjectCompletionReminderAdminTemplate, getProjectLaunchTemplate, getProjectOngoingTemplate, getProjectCompletedTemplate, getPreSettledInvestmentTemplate, getInvestmentSuccessTemplate
+};

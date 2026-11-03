@@ -335,8 +335,8 @@ const projectController = {
             for (const inv of investments) {
               if (inv.investor && inv.investor.email) {
                 console.log(`[DEBUG] Attempting to send completion email to ${inv.investor.email}`);
-                const html = getProjectCompletedTemplate(project, inv.investor);
-                const subject = `Congratulations! ${project.projectName} has Matured - Check Your Settlement`;
+                const html = getProjectCompletedTemplate(project, inv.investor, inv);
+                const subject = `Congratulations! ${project.projectName} Completed - Amount Credited`;
                 
                 sendEmail({ to: inv.investor.email, subject, html })
                   .then(() => console.log(`[DEBUG] Completion email sent to ${inv.investor.email}`))
