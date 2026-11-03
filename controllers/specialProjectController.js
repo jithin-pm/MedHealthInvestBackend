@@ -1,12 +1,13 @@
 const SpecialProject = require("../models/specialProjectModel");
 const User = require("../models/userModel");
 const SpecialInvestment = require("../models/specialInvestmentModel");
+const SpecialInvestmentLedger = require("../models/specialInvestmentLedgerModel");
 const sequelize = require("../config/db");
 
 const specialProjectController = {
   addProject: async (req, res) => {
     try {
-      const { projectName, projectCategory, targetAmount, collectedAmount, minInvestmentAmount, roi, assignedUserId, investmentMode } = req.body;
+      const { projectName, projectCategory, targetAmount, collectedAmount, minInvestmentAmount, roi, assignedUserId, investmentMode, startDate } = req.body;
 
       if (!projectName || !projectCategory || !targetAmount || !roi || !assignedUserId) {
         return res.status(400).json({ message: "All required fields must be provided" });
@@ -27,8 +28,16 @@ const specialProjectController = {
 
       const paymentProof = req.file ? req.file.path.replace(/\\/g, '/') : null;
 
+      let customStartDate = new Date();
+      if (startDate) {
+        const d = new Date(startDate);
+        if (!isNaN(d.getTime())) {
+          customStartDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0);
+        }
+      }
+
       const isPreSettled = investmentMode === 'Pre-Settled';
-      const ongoingStartDate = isPreSettled ? new Date() : null;
+      const ongoingStartDate = isPreSettled ? customStartDate : null;
 
       const newProject = await SpecialProject.create({
         projectName,
@@ -40,19 +49,84 @@ const specialProjectController = {
         assignedUserId,
         paymentProof,
         status: isPreSettled ? 'ONGOING' : 'ACTIVE',
-        ongoingStartDate
+        ongoingStartDate,
+        created_at: customStartDate,
+        updated_at: customStartDate
       });
 
       if (isPreSettled) {
-        await SpecialInvestment.create({
+        const principal = parseFloat(targetAmount);
+        const monthlyRoi = parseFloat(roi);
+        const monthlyInterest = (principal * monthlyRoi) / 100;
+
+        const now = new Date();
+        const startYear = customStartDate.getFullYear();
+        const startMonth = customStartDate.getMonth(); // 0-indexed
+
+        // Grace period is Month 1 after investment (cooling buffer)
+        const gracePeriodDate = new Date(startYear, startMonth + 1, 1, 12, 0, 0);
+        const gracePeriodPassed = gracePeriodDate <= now;
+
+        // Interest begins accruing from Month 2 onwards on the 1st of each month
+        const eligibleAccruals = [];
+        let totalAccumulatedInterest = 0;
+        let monthOffset = 2;
+
+        while (true) {
+          const accrualDate = new Date(startYear, startMonth + monthOffset, 1, 12, 0, 0);
+          if (accrualDate > now) {
+            break;
+          }
+          totalAccumulatedInterest += monthlyInterest;
+          eligibleAccruals.push({
+            date: accrualDate,
+            amount: monthlyInterest
+          });
+          monthOffset++;
+        }
+
+        const newInvestment = await SpecialInvestment.create({
           specialProjectId: newProject.id,
           userId: assignedUserId,
           amountInvested: targetAmount,
           remainingCapital: targetAmount,
+          accumulatedInterest: totalAccumulatedInterest.toFixed(2),
           paymentId: `PRESETTLED_${Date.now()}`,
           orderId: `ORDER_${Date.now()}`,
-          status: 'SUCCESS'
+          status: 'SUCCESS',
+          paybackStatus: 'PENDING',
+          gracePeriodEmailSent: gracePeriodPassed,
+          created_at: customStartDate,
+          updated_at: customStartDate
         });
+
+        // 1. Initial Investment entry
+        await SpecialInvestmentLedger.create({
+          specialInvestmentId: newInvestment.id,
+          transactionType: 'INITIAL_INVESTMENT',
+          amount: principal.toFixed(2),
+          balanceAfter: principal.toFixed(2),
+          description: 'Initial Investment',
+          transactionDate: customStartDate,
+          created_at: customStartDate,
+          updated_at: customStartDate
+        });
+
+        // 2. Accrued interest entries for each eligible month
+        let rollingBalance = principal;
+        for (const acc of eligibleAccruals) {
+          rollingBalance += acc.amount;
+          await SpecialInvestmentLedger.create({
+            specialInvestmentId: newInvestment.id,
+            transactionType: 'INTEREST_ACCRUED',
+            amount: acc.amount.toFixed(2),
+            balanceAfter: rollingBalance.toFixed(2),
+            description: `Monthly Interest (${roi}%)`,
+            transactionDate: acc.date,
+            created_at: acc.date,
+            updated_at: acc.date
+          });
+        }
       }
 
       res.status(201).json({ message: "Special project added successfully", project: newProject });
@@ -96,7 +170,7 @@ const specialProjectController = {
   editProject: async (req, res) => {
     try {
       const { id } = req.params;
-      const { projectName, projectCategory, targetAmount, collectedAmount, minInvestmentAmount, roi, status, assignedUserId } = req.body;
+      const { projectName, projectCategory, targetAmount, collectedAmount, minInvestmentAmount, roi, status, assignedUserId, startDate } = req.body;
 
       const project = await SpecialProject.findByPk(id);
       if (!project) {
@@ -108,7 +182,14 @@ const specialProjectController = {
       let ongoingStartDate = project.ongoingStartDate;
       let completionDate = project.completionDate;
 
-      if (status === 'ONGOING' && project.status !== 'ONGOING') {
+      if (startDate) {
+        const d = new Date(startDate);
+        if (!isNaN(d.getTime())) {
+          ongoingStartDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0);
+        }
+      }
+
+      if (status === 'ONGOING' && project.status !== 'ONGOING' && !ongoingStartDate) {
         ongoingStartDate = new Date();
       }
 
@@ -148,7 +229,6 @@ const specialProjectController = {
         return res.status(404).json({ message: "Special project not found" });
       }
 
-      const SpecialInvestmentLedger = require("../models/specialInvestmentLedgerModel");
       const SpecialPayout = require("../models/specialPayoutModel");
 
       const investments = await SpecialInvestment.findAll({
@@ -192,9 +272,6 @@ const specialProjectController = {
             where: { assignedUserId: userId },
             order: [['created_at', 'DESC']]
         });
-        
-        const SpecialInvestment = require("../models/specialInvestmentModel");
-        const SpecialInvestmentLedger = require("../models/specialInvestmentLedgerModel");
 
         const investments = await SpecialInvestment.findAll({
             where: { userId: userId, status: 'SUCCESS' }
