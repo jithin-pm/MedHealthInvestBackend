@@ -38,7 +38,15 @@ const runMonthlyInterestAccrual = async () => {
         const cutoffDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
 
         for (const investment of activeInvestments) {
-            const investmentDate = new Date(investment.created_at || investment.createdAt);
+            const initialLedger = await SpecialInvestmentLedger.findOne({
+                where: {
+                    specialInvestmentId: investment.id,
+                    transactionType: 'INITIAL_INVESTMENT'
+                }
+            });
+            const investmentDate = initialLedger
+                ? new Date(initialLedger.transactionDate)
+                : new Date(investment.project?.ongoingStartDate || investment.created_at || investment.createdAt);
 
             if (investmentDate >= cutoffDate) {
                 console.log(`[CRON] Skipping Investment ID: ${investment.id} (Invested ${investmentDate.toISOString()} - next payout will be next month)`);

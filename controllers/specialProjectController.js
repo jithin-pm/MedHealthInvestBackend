@@ -3,6 +3,124 @@ const User = require("../models/userModel");
 const SpecialInvestment = require("../models/specialInvestmentModel");
 const SpecialInvestmentLedger = require("../models/specialInvestmentLedgerModel");
 const sequelize = require("../config/db");
+const { Op, Sequelize } = require("sequelize");
+
+const parseCustomStartDate = (startDate) => {
+  if (!startDate) return new Date();
+  if (typeof startDate === 'string' && startDate.includes('-')) {
+    const parts = startDate.split('T')[0].split('-').map(Number);
+    if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+      return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
+    }
+  }
+  const d = new Date(startDate);
+  if (!isNaN(d.getTime())) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0);
+  }
+  return new Date();
+};
+
+const syncProjectLedgersAndDates = async (project, customStartDate) => {
+  if (!project || !customStartDate) return;
+
+  const investments = await SpecialInvestment.findAll({
+    where: { specialProjectId: project.id }
+  });
+
+  const now = new Date();
+  const startYear = customStartDate.getFullYear();
+  const startMonth = customStartDate.getMonth(); // 0-indexed
+  const gracePeriodDate = new Date(startYear, startMonth + 1, 1, 12, 0, 0);
+  const gracePeriodPassed = gracePeriodDate <= now;
+
+  for (const inv of investments) {
+    const principal = parseFloat(inv.amountInvested || project.targetAmount);
+    const monthlyRoi = parseFloat(project.roi);
+    const monthlyInterest = (principal * monthlyRoi) / 100;
+
+    // 1. Initial Investment entry
+    const existingInitial = await SpecialInvestmentLedger.findOne({
+      where: {
+        specialInvestmentId: inv.id,
+        transactionType: 'INITIAL_INVESTMENT'
+      }
+    });
+
+    if (existingInitial) {
+      await existingInitial.update({
+        transactionDate: customStartDate,
+        amount: principal.toFixed(2),
+        balanceAfter: principal.toFixed(2)
+      });
+    } else {
+      await SpecialInvestmentLedger.create({
+        specialInvestmentId: inv.id,
+        transactionType: 'INITIAL_INVESTMENT',
+        amount: principal.toFixed(2),
+        balanceAfter: principal.toFixed(2),
+        description: 'Initial Investment',
+        transactionDate: customStartDate,
+        created_at: customStartDate,
+        updated_at: customStartDate
+      });
+    }
+
+    // 2. Accruals from Month 2 onwards (Month 1 is Grace Period)
+    let monthOffset = 2;
+    let totalAccumulatedInterest = 0;
+    let rollingBalance = principal;
+
+    while (true) {
+      const accrualDate = new Date(startYear, startMonth + monthOffset, 1, 12, 0, 0);
+      if (accrualDate > now) {
+        break;
+      }
+      totalAccumulatedInterest += monthlyInterest;
+      rollingBalance += monthlyInterest;
+
+      const accYear = accrualDate.getFullYear();
+      const accMonth = accrualDate.getMonth() + 1; // 1-12
+      const existingAccrual = await SpecialInvestmentLedger.findOne({
+        where: {
+          specialInvestmentId: inv.id,
+          transactionType: 'INTEREST_ACCRUED',
+          [Op.and]: [
+            Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('transactionDate')), accYear),
+            Sequelize.where(Sequelize.fn('MONTH', Sequelize.col('transactionDate')), accMonth)
+          ]
+        }
+      });
+
+      if (!existingAccrual) {
+        await SpecialInvestmentLedger.create({
+          specialInvestmentId: inv.id,
+          transactionType: 'INTEREST_ACCRUED',
+          amount: monthlyInterest.toFixed(2),
+          balanceAfter: rollingBalance.toFixed(2),
+          description: `Monthly Interest (${monthlyRoi}%)`,
+          transactionDate: accrualDate,
+          created_at: accrualDate,
+          updated_at: accrualDate
+        });
+      }
+      monthOffset++;
+    }
+
+    await inv.update({
+      accumulatedInterest: totalAccumulatedInterest.toFixed(2),
+      gracePeriodEmailSent: gracePeriodPassed,
+      created_at: customStartDate
+    });
+
+    await sequelize.query("UPDATE special_investments SET created_at = ? WHERE id = ?", {
+      replacements: [customStartDate, inv.id]
+    });
+  }
+
+  await sequelize.query("UPDATE special_projects SET created_at = ? WHERE id = ?", {
+    replacements: [customStartDate, project.id]
+  });
+};
 
 const specialProjectController = {
   addProject: async (req, res) => {
@@ -28,13 +146,7 @@ const specialProjectController = {
 
       const paymentProof = req.file ? req.file.path.replace(/\\/g, '/') : null;
 
-      let customStartDate = new Date();
-      if (startDate) {
-        const d = new Date(startDate);
-        if (!isNaN(d.getTime())) {
-          customStartDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0);
-        }
-      }
+      const customStartDate = parseCustomStartDate(startDate);
 
       const isPreSettled = investmentMode === 'Pre-Settled';
       const ongoingStartDate = isPreSettled ? customStartDate : null;
@@ -67,30 +179,12 @@ const specialProjectController = {
         const gracePeriodDate = new Date(startYear, startMonth + 1, 1, 12, 0, 0);
         const gracePeriodPassed = gracePeriodDate <= now;
 
-        // Interest begins accruing from Month 2 onwards on the 1st of each month
-        const eligibleAccruals = [];
-        let totalAccumulatedInterest = 0;
-        let monthOffset = 2;
-
-        while (true) {
-          const accrualDate = new Date(startYear, startMonth + monthOffset, 1, 12, 0, 0);
-          if (accrualDate > now) {
-            break;
-          }
-          totalAccumulatedInterest += monthlyInterest;
-          eligibleAccruals.push({
-            date: accrualDate,
-            amount: monthlyInterest
-          });
-          monthOffset++;
-        }
-
         const newInvestment = await SpecialInvestment.create({
           specialProjectId: newProject.id,
           userId: assignedUserId,
           amountInvested: targetAmount,
           remainingCapital: targetAmount,
-          accumulatedInterest: totalAccumulatedInterest.toFixed(2),
+          accumulatedInterest: "0.00",
           paymentId: `PRESETTLED_${Date.now()}`,
           orderId: `ORDER_${Date.now()}`,
           status: 'SUCCESS',
@@ -100,33 +194,8 @@ const specialProjectController = {
           updated_at: customStartDate
         });
 
-        // 1. Initial Investment entry
-        await SpecialInvestmentLedger.create({
-          specialInvestmentId: newInvestment.id,
-          transactionType: 'INITIAL_INVESTMENT',
-          amount: principal.toFixed(2),
-          balanceAfter: principal.toFixed(2),
-          description: 'Initial Investment',
-          transactionDate: customStartDate,
-          created_at: customStartDate,
-          updated_at: customStartDate
-        });
-
-        // 2. Accrued interest entries for each eligible month
-        let rollingBalance = principal;
-        for (const acc of eligibleAccruals) {
-          rollingBalance += acc.amount;
-          await SpecialInvestmentLedger.create({
-            specialInvestmentId: newInvestment.id,
-            transactionType: 'INTEREST_ACCRUED',
-            amount: acc.amount.toFixed(2),
-            balanceAfter: rollingBalance.toFixed(2),
-            description: `Monthly Interest (${roi}%)`,
-            transactionDate: acc.date,
-            created_at: acc.date,
-            updated_at: acc.date
-          });
-        }
+        // Synchronize initial investment ledger, accruals for past months, and timestamps
+        await syncProjectLedgersAndDates(newProject, customStartDate);
       }
 
       res.status(201).json({ message: "Special project added successfully", project: newProject });
@@ -160,6 +229,15 @@ const specialProjectController = {
         return res.status(404).json({ message: "Special project not found" });
       }
 
+      // Auto-heal missing ledgers or accruals if project is ONGOING
+      if (project.status === 'ONGOING' && project.ongoingStartDate) {
+        try {
+          await syncProjectLedgersAndDates(project, new Date(project.ongoingStartDate));
+        } catch (healErr) {
+          console.error("Auto-heal ledger error in getProjectById:", healErr);
+        }
+      }
+
       res.status(200).json(project);
     } catch (error) {
       console.error(error);
@@ -183,10 +261,7 @@ const specialProjectController = {
       let completionDate = project.completionDate;
 
       if (startDate) {
-        const d = new Date(startDate);
-        if (!isNaN(d.getTime())) {
-          ongoingStartDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0);
-        }
+        ongoingStartDate = parseCustomStartDate(startDate);
       }
 
       if (status === 'ONGOING' && project.status !== 'ONGOING' && !ongoingStartDate) {
@@ -210,6 +285,10 @@ const specialProjectController = {
         ongoingStartDate,
         completionDate
       });
+
+      if (ongoingStartDate) {
+        await syncProjectLedgersAndDates(project, ongoingStartDate);
+      }
 
       res.status(200).json({ message: "Special project updated successfully", project });
     } catch (error) {
