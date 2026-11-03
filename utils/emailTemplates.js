@@ -11,7 +11,7 @@ const getProjectLaunchTemplate = (project, user = {}) => {
     <p>A new strategic investment opportunity is now available on our platform. We thought you might be interested in expanding your portfolio with this latest offering.</p>
     
     <div style="display: inline-block; padding: 6px 14px; border-radius: 8px; background-color: #e8f5e9; color: #00c853; font-weight: 700; font-size: 13px; text-transform: uppercase; margin-bottom: 20px;">
-      ${roi}% Monthly ROI • Min. Investment ₹${formattedMinInvestment}
+      ${roi}% Monthly ROI • ${yearlyRoi}% Yearly ROI • Min. Investment ₹${formattedMinInvestment}
     </div>
 
     <div class="project-card">
@@ -32,8 +32,8 @@ const getProjectLaunchTemplate = (project, user = {}) => {
         <div class="detail-value" style="color: #00c853; font-size: 22px;">${roi}% per month</div>
       </div>
       <div class="detail-item">
-        <div class="detail-label">Yearly ROI (Annualized)</div>
-        <div class="detail-value">${yearlyRoi}% p.a.</div>
+        <div class="detail-label" style="color: #00c853; font-weight: 700;">Yearly ROI (Annualized)</div>
+        <div class="detail-value" style="color: #00c853; font-size: 22px;">${yearlyRoi}% p.a.</div>
       </div>
       <div class="detail-item">
         <div class="detail-label">Commitment Term</div>
@@ -41,12 +41,12 @@ const getProjectLaunchTemplate = (project, user = {}) => {
       </div>
     </div>
     
-    <p>This project offers an attractive return of <strong>${roi}% monthly</strong> (approx. <strong>${yearlyRoi}% yearly</strong>) with accessible entry starting from <strong>₹${formattedMinInvestment}</strong>. It has been carefully vetted to meet our standards for health-sector growth and financial resilience.</p>
+    <p>This project offers an attractive return of <strong>${roi}% monthly (${yearlyRoi}% yearly annualized)</strong> with accessible entry starting from <strong>₹${formattedMinInvestment}</strong>. It has been carefully vetted to meet our standards for health-sector growth and financial resilience.</p>
     
     <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}/project/${project.id}" class="button">Explore Project</a>
   `;
 
-  return wrapInBaseLayout(`New Project Launched`, content, userName);
+  return wrapInBaseLayout(`New Project Launched: ${projectName} (${yearlyRoi}% Yearly ROI)`, content, userName);
 };
 
 const getProjectOngoingTemplate = (project, user = {}) => {
@@ -108,6 +108,7 @@ const getProjectCompletedTemplate = (project, user = {}) => {
 const getPreSettledInvestmentTemplate = (project, user = {}) => {
   const { projectName, roi, duration, targetAmount } = project;
   const userName = user.fullName || 'Investor';
+  const yearlyRoi = (Number(roi || 0) * 12).toFixed(1).replace(/\.0$/, '');
 
   const content = `
     <p>Great news! Your payment has been successfully verified by our team, and your invested timeline has started for <strong>${projectName}</strong>.</p>
@@ -122,8 +123,12 @@ const getPreSettledInvestmentTemplate = (project, user = {}) => {
         <div class="detail-value">₹${Number(targetAmount).toLocaleString('en-IN')}</div>
       </div>
       <div class="detail-item">
-        <div class="detail-label">Yearly ROI</div>
-        <div class="detail-value" style="color: #00c853;">${roi}%</div>
+        <div class="detail-label">Monthly ROI</div>
+        <div class="detail-value" style="color: #00c853;">${roi}% per month</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Yearly ROI (Annualized)</div>
+        <div class="detail-value" style="color: #00c853; font-weight: 700;">${yearlyRoi}% p.a.</div>
       </div>
       <div class="detail-item">
         <div class="detail-label">Duration</div>
@@ -142,6 +147,7 @@ const getPreSettledInvestmentTemplate = (project, user = {}) => {
 const getInvestmentSuccessTemplate = (project, user = {}, amount) => {
   const { projectName, roi, duration } = project;
   const userName = user.fullName || 'Investor';
+  const yearlyRoi = (Number(roi || 0) * 12).toFixed(1).replace(/\.0$/, '');
 
   const content = `
     <p>Congratulations! Your investment in <strong>${projectName}</strong> has been successfully processed.</p>
@@ -156,8 +162,12 @@ const getInvestmentSuccessTemplate = (project, user = {}, amount) => {
         <div class="detail-value">₹${Number(amount).toLocaleString('en-IN')}</div>
       </div>
       <div class="detail-item">
-        <div class="detail-label">Yearly ROI</div>
-        <div class="detail-value" style="color: #00c853;">${roi}%</div>
+        <div class="detail-label">Monthly ROI</div>
+        <div class="detail-value" style="color: #00c853;">${roi}% per month</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Yearly ROI (Annualized)</div>
+        <div class="detail-value" style="color: #00c853; font-weight: 700;">${yearlyRoi}% p.a.</div>
       </div>
       <div class="detail-item">
         <div class="detail-label">Duration</div>

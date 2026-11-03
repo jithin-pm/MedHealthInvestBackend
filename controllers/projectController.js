@@ -130,7 +130,8 @@ const projectController = {
                 subject = `Investment Verified & Started: ${newProject.projectName}`;
               } else {
                 emailHtml = getProjectLaunchTemplate(newProject, user);
-                subject = `New Project Launched: ${newProject.projectName} - ${newProject.roi}% Monthly ROI Opportunity!`;
+                const yearlyRoi = (Number(newProject.roi || 0) * 12).toFixed(1).replace(/\.0$/, '');
+                subject = `New Project Launched: ${newProject.projectName} - ${newProject.roi}% Monthly (${yearlyRoi}% Yearly) ROI Opportunity!`;
               }
 
               sendEmail({
