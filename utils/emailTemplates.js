@@ -476,7 +476,7 @@ const getAccountUnblockedTemplate = (user) => {
 
     <p>If you suspect unauthorized sign-in attempts were made on your account, we recommend updating your password immediately after logging in.</p>
 
-    <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}/login" class="button">Sign In to Dashboard</a>
+    <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}" class="button">Visit Website</a>
   `;
 
   return wrapInBaseLayout(`Account Unblocked Successfully`, content, userName);

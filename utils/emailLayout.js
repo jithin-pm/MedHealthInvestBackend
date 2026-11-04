@@ -1,4 +1,3 @@
-
 const path = require('path');
 
 /**
@@ -8,6 +7,8 @@ const path = require('path');
  * @returns {string} - Complete HTML email
  */
 const wrapInBaseLayout = (title, content, userName = 'Valued Investor') => {
+  const websiteUrl = process.env.FRONTEND_URL || 'https://medhealthinvest.com';
+
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -49,14 +50,13 @@ const wrapInBaseLayout = (title, content, userName = 'Valued Investor') => {
         }
         
         .top-nav a {
-          color: #5e6d55;
+          color: #00c853;
           text-decoration: none;
-          margin-left: 15px;
-          font-weight: 600;
+          font-weight: 700;
+          letter-spacing: 0.5px;
         }
         
         .hero-section {
-          
           padding: 50px 40px;
           color: black;
           text-align: left;
@@ -144,13 +144,13 @@ const wrapInBaseLayout = (title, content, userName = 'Valued Investor') => {
       <div class="email-wrapper">
         <div class="email-container">
           <div class="top-nav">
-            <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}/projects">Projects</a>
-            <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}/profile">Dashboard</a>
-            <a href="${process.env.FRONTEND_URL || 'https://medhealthinvest.com'}">Logout</a>
+            <a href="${websiteUrl}">Visit Website &rarr;</a>
           </div>
           
           <div class="hero-section">
-            <img src="cid:mhi-logo" alt="MedHealth Invest">
+            <a href="${websiteUrl}" style="text-decoration: none; display: inline-block;">
+              <img src="cid:mhi-logo" alt="MedHealth Invest">
+            </a>
             <div class="hero-text">${title}</div>
           </div>
           
@@ -162,7 +162,7 @@ const wrapInBaseLayout = (title, content, userName = 'Valued Investor') => {
           <div class="footer">
             <p>&copy; 2026 MedHealth Invest. All rights reserved.</p>
             <p>
-              <a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a>
+              <a href="${websiteUrl}">medhealthinvest.com</a> | <a href="${websiteUrl}/privacy-policy">Privacy Policy</a>
             </p>
           </div>
         </div>

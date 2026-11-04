@@ -2,7 +2,7 @@ const transporter = require("../config/email");
 const { getLogoAttachment } = require("./emailLayout");
 
 /**
- * Send an email
+ * Send an email via Hostinger mail account (noreply@medhealthinvest.com)
  * @param {Object} options - Email options
  * @param {string} options.to - Recipient email
  * @param {string} options.subject - Email subject
@@ -15,15 +15,12 @@ const { getLogoAttachment } = require("./emailLayout");
 const sendEmail = async (options) => {
   try {
     const { to, subject, html, text, bcc, cc, attachments, from, replyTo } = options;
-    const sender = from || process.env.EMAIL_FROM;
+    const defaultSender = process.env.EMAIL_FROM || '"Med Health Invest" <noreply@medhealthinvest.com>';
+    const sender = from || defaultSender;
 
-    const activeTransporter = (transporter.hostingerTransporter && sender && sender.includes('noreply@medhealthinvest.com'))
-      ? transporter.hostingerTransporter
-      : transporter;
-
-    const info = await activeTransporter.sendMail({
+    const info = await transporter.sendMail({
       from: sender,
-      replyTo: replyTo || sender,
+      replyTo: replyTo || 'noreply@medhealthinvest.com',
       to,
       subject,
       text: text || (html ? html.replace(/<[^>]*>?/gm, '') : ''),
@@ -33,10 +30,10 @@ const sendEmail = async (options) => {
       attachments: [getLogoAttachment(), ...(attachments || [])]
     });
 
-    console.log("Message sent: %s", info.messageId);
+    console.log("Email sent successfully via Hostinger: %s to %s", info.messageId, to);
     return info;
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("Error sending email via Hostinger:", error.message || error);
     throw error;
   }
 };
