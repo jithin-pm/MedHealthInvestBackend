@@ -340,7 +340,9 @@ const initializeDb = async () => {
   }
 };
 
-initializeDb();
+if (process.env.NODE_ENV !== "production") {
+  initializeDb();
+}
 
 app.use((req, res, next) => {
   req.io = io;
@@ -582,7 +584,7 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-const PORT = 5000;
+const PORT = Number(process.env.PORT) || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
