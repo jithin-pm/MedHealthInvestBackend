@@ -2,10 +2,10 @@
   "name": "medhealthinvestbackend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "medhealth.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node medhealth.js",
+    "dev": "nodemon medhealth.js"
   },
   "keywords": [],
   "author": "",
